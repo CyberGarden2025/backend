@@ -39,6 +39,19 @@ export default class User extends Model {
     })
     password: string;
 
+    @Column({
+        type: DataType.FLOAT,
+        allowNull: false,
+        defaultValue: 0,
+    })
+    balance: number;
+
+    @Column({
+        type: DataType.FLOAT,
+        allowNull: true,
+    })
+    transactionLimit?: string;
+
     @HasMany(() => Transaction)
     transactions: Transaction[];
 }

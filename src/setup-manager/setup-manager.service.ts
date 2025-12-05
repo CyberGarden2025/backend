@@ -113,6 +113,9 @@ export class SetupManagerService implements OnModuleInit {
             }
 
             this.logger.log(`CSV import completed: ${createdCount} created, ${errorCount} errors`);
+            await this.userService.update(user, {
+                balance: this.parseNumber(records.at(-1)!.Balance),
+            });
         } catch (error) {
             this.logger.error(`Error reading CSV file: ${error.message}`);
             this.logger.error('Stack trace:', error.stack);
