@@ -9,4 +9,4 @@ COPY . .
 
 RUN yarn build
 
-CMD yarn db:setup && node dist/main.js
+CMD yarn db:setup && node dist/src/main.js
