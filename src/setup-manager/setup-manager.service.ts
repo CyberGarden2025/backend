@@ -1,0 +1,148 @@
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { TransactionService } from 'src/transaction/transaction.service';
+import { UserService } from 'src/user/user.service';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { parse } from 'csv-parse/sync';
+
+interface CsvTransaction {
+    Date: string;
+    Category: string;
+    RefNo: string;
+    Date2: string;
+    Withdrawal: string;
+    Deposit: string;
+    Balance: string;
+}
+
+@Injectable()
+export class SetupManagerService implements OnModuleInit {
+    private readonly logger = new Logger(SetupManagerService.name);
+
+    constructor(
+        private readonly userService: UserService,
+        private readonly transactionService: TransactionService,
+    ) {}
+
+    async onModuleInit() {
+        await this.createDefaultUser();
+    }
+
+    async createDefaultUser() {
+        const data = {
+            email: 'admin@mail.ru',
+            username: 'testUser',
+            password: 'aeboba',
+        };
+        const user = await this.userService
+            .findOne({ where: { email: data.email } })
+            .catch(() => null);
+
+        if (!user) {
+            await this.userService.createUser(data);
+            await this.createCsvTransactions();
+        }
+        this.logger.log('User is found. Skipping create transactions');
+    }
+
+    async createCsvTransactions() {
+        try {
+            const filePath = join(__dirname, '..', '..', 'data', 'ci_data.csv');
+
+            const fileContent = readFileSync(filePath, 'utf-8');
+
+            const lines = fileContent.split('\n');
+
+            const firstDataLine = lines.find(
+                line => line.trim().length > 0 && !line.includes('Date\tCategory'),
+            );
+            const delimiter = firstDataLine && firstDataLine.includes('\t') ? '\t' : ',';
+
+            const dataLines = lines.slice(2).filter(line => line.trim().length > 0);
+            const csvData = dataLines.join('\n');
+
+            const records: CsvTransaction[] = parse(csvData, {
+                delimiter: delimiter,
+                columns: ['Date', 'Category', 'RefNo', 'Date2', 'Withdrawal', 'Deposit', 'Balance'],
+                skip_empty_lines: true,
+                trim: true,
+                relax_column_count: true,
+            });
+
+            // Находим пользователя для привязки транзакций
+            const user = await this.userService
+                .findOne({
+                    where: { email: 'admin@mail.ru' },
+                })
+                .catch(() => null);
+
+            if (!user) {
+                this.logger.error('User not found for transactions');
+                return;
+            }
+
+            this.logger.log(`User found: ${user.email}, ID: ${user.id}`);
+
+            let createdCount = 0;
+            let errorCount = 0;
+
+            for (const record of records) {
+                try {
+                    if (!record.Date || !record.Category) {
+                        this.logger.warn('Skipping invalid record:', record);
+                        errorCount++;
+                        continue;
+                    }
+
+                    const transactionData = {
+                        transactionDate: this.parseDate(record.Date),
+                        category: record.Category,
+                        refNo: record.RefNo,
+                        withdrawal: this.parseNumber(record.Withdrawal),
+                        deposit: this.parseNumber(record.Deposit),
+                        balance: this.parseNumber(record.Balance),
+                        userId: user.id,
+                    };
+
+                    await this.transactionService.create(transactionData);
+                    createdCount++;
+                } catch (error) {
+                    this.logger.error(`Error creating transaction: ${error.message}`, record);
+                    errorCount++;
+                }
+            }
+
+            this.logger.log(`CSV import completed: ${createdCount} created, ${errorCount} errors`);
+        } catch (error) {
+            this.logger.error(`Error reading CSV file: ${error.message}`);
+            this.logger.error('Stack trace:', error.stack);
+        }
+    }
+
+    private parseDate(dateString: string): Date {
+        if (!dateString || dateString.trim() === '') {
+            return new Date();
+        }
+
+        // Формат "M/D/YYYY"
+        const [month, day, year] = dateString.split('/');
+        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+
+    private parseNumber(value: string): number {
+        if (!value || value.trim() === '' || value === '0') {
+            return 0;
+        }
+
+        // Убираем запятые и преобразуем научную нотацию
+        let cleanValue = value.replace(/,/g, '');
+
+        // Обработка научной нотации (например, "3.00E+11")
+        if (cleanValue.includes('E')) {
+            return parseFloat(cleanValue);
+        }
+
+        const num = parseFloat(cleanValue);
+        return isNaN(num) ? 0 : num;
+    }
+}

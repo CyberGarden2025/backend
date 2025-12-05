@@ -12,6 +12,8 @@
         "@nestjs/platform-express": "^11.1.9",
         "@nestjs/schematics": "^11.0.9",
         "@types/node": "^24.10.1",
+        "bcrypt": "^6.0.0",
+        "csv-parse": "^6.1.0",
         "pg": "^8.16.3",
         "reflect-metadata": "0.2",
         "sequelize": "^6.37.7",
@@ -26,8 +28,8 @@
         "migration:create": "npx sequelize-cli migration:generate --migrations-path ./src/database/migrations --name",
         "migrate": "npx sequelize-cli db:migrate",
         "migrate:undo": "npx sequelize-cli db:migrate:undo",
-        "db:create": "npx sequelize-cli db:create",
-        "db:setup": "npx sequelize-cli db:create && npx sequelize-cli db:migrate",
+        "db:create": "npx sequelize-cli db:create || echo \"Database already exists, continuing...\"",
+        "db:setup": "yarn db:create && yarn migrate",
         "db:drop": "npx sequelize-cli db:drop"
     }
 }

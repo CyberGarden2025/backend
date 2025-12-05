@@ -1,5 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
+import Transaction from '../transaction/transaction.model';
+import User from '../user/user.model';
 
 export const databaseProviders = [
     {
@@ -8,11 +10,11 @@ export const databaseProviders = [
         useFactory: async (configService: ConfigService) => {
             const sequelize = new Sequelize({
                 dialect: 'postgres',
-                port: +configService.get('WIDGET_DB_PORT'),
-                host: configService.get('WIDGET_DB_IP'),
-                username: configService.get('WIDGET_DB_USER'),
-                password: configService.get('WIDGET_DB_PASSWORD'),
-                database: configService.get('WIDGET_DB_NAME'),
+                port: +configService.get('DB_PORT'),
+                host: configService.get('DB_IP'),
+                username: configService.get('DB_USER'),
+                password: configService.get('DB_PASSWORD'),
+                database: configService.get('DB_NAME'),
                 logging: false,
                 pool: {
                     max: 50,
@@ -20,7 +22,7 @@ export const databaseProviders = [
                     acquire: 30000,
                     idle: 10000,
                 },
-                models: [],
+                models: [User, Transaction],
             });
             return sequelize;
         },
