@@ -4,12 +4,28 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     const configService = app.get(ConfigService);
     const port = configService.get('BACKEND_PORT');
     const frontendHost = configService.get('FRONTEND_HOST');
+    const normalizeOrigin = (origin: string) => {
+        if (!origin) return null;
+        const trimmed = origin.trim();
+        if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+            return trimmed;
+        }
+        return `http://${trimmed}`;
+    };
+
+    const allowedOrigins =
+        frontendHost
+            ?.split(',')
+            .map(normalizeOrigin)
+            .filter((origin): origin is string => Boolean(origin)) || ['http://localhost:4200'];
+    app.setGlobalPrefix('api');
 
     const config = new DocumentBuilder().setTitle('Banking API').setVersion('1.0').build();
     const document = SwaggerModule.createDocument(app, config);
@@ -21,6 +37,7 @@ async function bootstrap() {
             transform: true,
         }),
     );
+    app.useGlobalInterceptors(new LoggingInterceptor());
 
     SwaggerModule.setup('api', app, document, {
         swaggerOptions: {
@@ -29,10 +46,7 @@ async function bootstrap() {
         customSiteTitle: 'Banking API Documentation',
     });
 
-    app.enableCors({
-        origin: `${frontendHost}`,
-        credentials: true,
-    });
+    app.enableCors({ origin: allowedOrigins, credentials: true });
 
     await app.listen(port || 3000);
 }
