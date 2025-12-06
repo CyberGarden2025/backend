@@ -45,3 +45,28 @@
 {"timestamp":"2025-12-06T11:09:57.888Z","type":"client_event","userId":1,"status":"success","meta":{"event":"foreground_notification_received","payload":{"from":"281161870090","messageId":"6bdad1a4-c295-4256-ada0-cfb0b2660b7f","notification":{"title":"Test notification","body":"Hello from curl 22"},"data":{"foo":"bar"}}}}
 {"timestamp":"2025-12-06T11:26:11.333Z","type":"client_event","userId":1,"status":"success","meta":{"event":"foreground_notification_received","payload":{"from":"281161870090","messageId":"0804f63b-be0b-4b8d-85a7-478a4e897a4b","notification":{"title":"Test notification","body":"Hello from curl 22"},"data":{"foo":"bar"}}}}
 {"timestamp":"2025-12-06T11:26:11.342Z","type":"send","userId":1,"tokenMasked":"c6R7Wt2w...df40","status":"success","messageId":"projects/test1-e175e/messages/0804f63b-be0b-4b8d-85a7-478a4e897a4b","meta":{"title":"Test notification"}}
+{"timestamp":"2025-12-06T12:07:57.105Z","type":"client_event","tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:07:57.110Z","type":"client_event","tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:08:41.202Z","type":"send","userId":1,"status":"success","meta":{"title":"????? ???????????"}}
+{"timestamp":"2025-12-06T12:11:18.848Z","type":"send","userId":1,"status":"success","meta":{"title":"????? ???????????"}}
+{"timestamp":"2025-12-06T12:14:10.226Z","type":"send","userId":1,"status":"success","meta":{"title":"Новое уведомление"}}
+{"timestamp":"2025-12-06T12:14:56.057Z","type":"client_event","tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:14:56.059Z","type":"client_event","tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:15:07.267Z","type":"send","userId":1,"status":"success","meta":{"title":"Новое уведомление"}}
+{"timestamp":"2025-12-06T12:17:26.836Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:17:26.837Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:17:26.945Z","type":"token_update","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success"}
+{"timestamp":"2025-12-06T12:17:27.070Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_synced"}}
+{"timestamp":"2025-12-06T12:17:37.746Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:17:37.747Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:17:37.791Z","type":"token_update","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success"}
+{"timestamp":"2025-12-06T12:17:37.799Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_synced"}}
+{"timestamp":"2025-12-06T12:20:25.837Z","type":"send","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","messageId":"projects/test1-e175e/messages/3061b198-e52b-4564-98a6-4c1f3ef88781","meta":{"title":"Test notification"}}
+{"timestamp":"2025-12-06T12:26:49.742Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:26:49.743Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:26:49.818Z","type":"token_update","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success"}
+{"timestamp":"2025-12-06T12:26:49.876Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_synced"}}
+{"timestamp":"2025-12-06T12:27:59.481Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:27:59.483Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_received"}}
+{"timestamp":"2025-12-06T12:27:59.545Z","type":"token_update","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success"}
+{"timestamp":"2025-12-06T12:27:59.554Z","type":"client_event","userId":1,"tokenMasked":"e0LreloS...dqtk","status":"success","meta":{"event":"token_synced"}}
