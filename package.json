@@ -7,11 +7,13 @@
     "dependencies": {
         "@nestjs/cli": "^11.0.14",
         "@nestjs/common": "^11.1.9",
+        "@nestjs/axios": "^4.0.1",
         "@nestjs/config": "^4.0.2",
         "@nestjs/core": "^11.1.9",
         "@nestjs/platform-express": "^11.1.9",
         "@nestjs/schematics": "^11.0.9",
         "@nestjs/swagger": "^11.2.3",
+        "axios": "^1.7.9",
         "@types/node": "^24.10.1",
         "bcrypt": "^6.0.0",
         "class-transformer": "^0.5.1",
@@ -29,11 +31,20 @@
         "start": "nest start",
         "start:dev": "nest start --watch",
         "start:prod": "node .",
+        "test": "jest",
         "migration:create": "npx sequelize-cli migration:generate --migrations-path ./src/database/migrations --name",
         "migrate": "npx sequelize-cli db:migrate",
         "migrate:undo": "npx sequelize-cli db:migrate:undo",
         "db:create": "npx sequelize-cli db:create || echo \"Database already exists, continuing...\"",
         "db:setup": "yarn db:create && yarn migrate",
         "db:drop": "npx sequelize-cli db:drop"
+    },
+    "devDependencies": {
+        "@nestjs/testing": "^11.1.9",
+        "@types/jest": "^29.5.14",
+        "@types/supertest": "^6.0.3",
+        "jest": "^29.7.0",
+        "supertest": "^7.0.0",
+        "ts-jest": "^29.3.4"
     }
 }

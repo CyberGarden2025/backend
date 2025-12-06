@@ -6,6 +6,9 @@ import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { FirebaseModule } from './notification/firebase/firebase.module';
 import { NotificationModule } from './notification/notification.module';
+import { MLModule } from './ml/ml.module';
+import { BIModule } from './bi/bi.module';
+import { AIChatModule } from './ai-chat/ai-chat.module';
 
 @Module({
     imports: [
@@ -16,6 +19,9 @@ import { NotificationModule } from './notification/notification.module';
         UserModule,
         TransactionModule,
         SetupManagerModule,
+        MLModule,
+        BIModule,
+        AIChatModule,
     ],
 })
 export class AppModule {}
