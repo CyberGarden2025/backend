@@ -15,6 +15,18 @@ services:
     restart: unless-stopped
     networks:
         - backend
+  ml-service:
+    build:
+        context: ./ml-service
+        dockerfile: Dockerfile
+    container_name: ml-service
+    ports:
+      - 8001:8001
+    restart: unless-stopped
+    volumes:
+        - ./ml-service/app/weights:/app/app/weights
+    networks:
+        - backend
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
