@@ -7,6 +7,10 @@ import Transaction from './transaction.model';
 import { TransactionsResponse, TransactionResponse } from './response/transaction.response';
 import { TotalTransactionResponse } from './response/total-transaction.response';
 import { MonthData } from './response/expenses-chart.response';
+import { TransactionCreateDto } from './dto/transaction-create.dto';
+import { MLService } from '../ml/ml.service';
+import { UserService } from '../user/user.service';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class TransactionService extends RepositoryService<Transaction> {
@@ -15,8 +19,83 @@ export class TransactionService extends RepositoryService<Transaction> {
     constructor(
         @Inject('TRANSACTIONS_REPOSITORY')
         protected repository: ModelType<Transaction>,
+        private readonly mlService: MLService,
+        private readonly userService: UserService,
     ) {
         super(repository);
+    }
+
+    private parseDateFromDDMMYYYY(dateString: string): Date {
+        // Поддерживаем как слеши, так и точки в качестве разделителей
+        const separator = dateString.includes('.') ? '.' : '/';
+        const [day, month, year] = dateString.split(separator).map(Number);
+        return new Date(year, month - 1, day);
+    }
+
+    private formatDateToYYYYMMDD(date: Date): string {
+        return date.toISOString().split('T')[0];
+    }
+
+    async createTransaction(userId: number, payload: TransactionCreateDto): Promise<Transaction> {
+        // Получаем пользователя (findById бросает NotFoundException если не найден)
+        const user = await this.userService.findById(userId);
+
+        // Парсим дату из формата dd/mm/yyyy
+        const transactionDate = this.parseDateFromDDMMYYYY(payload.transactionDate);
+        const formattedDate = this.formatDateToYYYYMMDD(transactionDate);
+
+        // Определяем withdrawal и deposit из sum
+        let withdrawal = 0;
+        let deposit = 0;
+        if (payload.sum < 0) {
+            withdrawal = Math.abs(payload.sum);
+        } else {
+            deposit = payload.sum;
+        }
+
+        // Если категория не указана, предсказываем через ML
+        let category = payload.category;
+        if (!category) {
+            try {
+                const prediction = await this.mlService.predictCategory({
+                    transactionDate: formattedDate,
+                    withdrawal,
+                    deposit,
+                    refNo: v4(),
+                    balance: user.balance,
+                });
+                category = prediction.category;
+                this.logger.log(`Predicted category: ${category} for user ${userId}`);
+            } catch (error) {
+                this.logger.error(`Failed to predict category: ${error.message}`);
+                category = 'Other'; // Значение по умолчанию
+            }
+        }
+
+        // Рассчитываем новый баланс
+        const newBalance = user.balance + payload.sum;
+
+        // Создаем транзакцию
+        const transaction = await super.create({
+            userId,
+            transactionDate: formattedDate,
+            category,
+            refNo: null,
+            withdrawal,
+            deposit,
+            balance: newBalance,
+        });
+
+        // Обновляем баланс пользователя
+        await this.userService.update(user, {
+            balance: newBalance,
+        });
+
+        this.logger.log(
+            `Transaction created: ID=${transaction.id}, User=${userId}, Balance updated to ${newBalance}`,
+        );
+
+        return transaction;
     }
 
     async getTransactionsGroupedByDate(options?: FindOptions): Promise<TransactionsResponse[]> {
@@ -137,7 +216,11 @@ export class TransactionService extends RepositoryService<Transaction> {
         };
     }
 
-    async getExpensesByMonth(userId: number, startDate: Date, endDate: Date): Promise<Map<string, number>> {
+    async getExpensesByMonth(
+        userId: number,
+        startDate: Date,
+        endDate: Date,
+    ): Promise<Map<string, number>> {
         const startDateStr = startDate.toISOString().split('T')[0];
         const endDateStr = endDate.toISOString().split('T')[0];
 
@@ -163,8 +246,12 @@ export class TransactionService extends RepositoryService<Transaction> {
                 return;
             }
 
-            const date = transactionDate instanceof Date ? transactionDate : new Date(transactionDate);
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const date =
+                transactionDate instanceof Date ? transactionDate : new Date(transactionDate);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+                2,
+                '0',
+            )}`;
 
             const withdrawal =
                 parseFloat(transaction.getDataValue('withdrawal')?.toString() || '0') ||
@@ -177,7 +264,11 @@ export class TransactionService extends RepositoryService<Transaction> {
         return monthlyExpenses;
     }
 
-    async getMonthSummary(userId: number, year: number, month: number): Promise<{ income: number; expenses: number }> {
+    async getMonthSummary(
+        userId: number,
+        year: number,
+        month: number,
+    ): Promise<{ income: number; expenses: number }> {
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0);
         const startDateStr = startDate.toISOString().split('T')[0];
@@ -314,11 +405,7 @@ export class TransactionService extends RepositoryService<Transaction> {
         return months[monthIndex];
     }
 
-    async updateCategory(
-        userId: number,
-        transactionId: number,
-        category: string,
-    ): Promise<void> {
+    async updateCategory(userId: number, transactionId: number, category: string): Promise<void> {
         const [affectedCount] = await this.repository.update(
             { category },
             {

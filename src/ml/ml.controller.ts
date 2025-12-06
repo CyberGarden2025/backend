@@ -48,10 +48,13 @@ export class MLController {
             forecastMonths?: number;
         },
     ) {
-        return this.mlService.getFinancialForecast({
-            userId,
-            ...body,
-        });
+        return this.mlService
+            .getFinancialForecast({
+                userId,
+                ...body,
+            })
+            .catch(err => {
+                console.log(err);
+            });
     }
 }
-
