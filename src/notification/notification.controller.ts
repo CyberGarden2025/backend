@@ -59,6 +59,17 @@ export class NotificationController {
         return this.userService.update(userId, { fcmToken });
     }
 
+    @Post('check/:userId')
+    async checkNotifications(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Body()
+        body: {
+            monthDate: string;
+        },
+    ) {
+        return this.notificationService.checkUserNotifications(userId, body.monthDate);
+    }
+
     private async getUserToken(userId: number): Promise<string> {
         const user = await this.userService.findOne({
             where: {

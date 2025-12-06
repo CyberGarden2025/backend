@@ -258,6 +258,44 @@ export class TransactionService extends RepositoryService<Transaction> {
         return categoryExpenses;
     }
 
+    async getWithdrawalsForMonthWithIds(
+        userId: number,
+        year: number,
+        month: number,
+    ): Promise<Array<{ id: number; category: string; amount: number }>> {
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0);
+        const startDateStr = startDate.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
+
+        const transactions = await this.repository.findAll({
+            where: {
+                userId,
+                transactionDate: {
+                    [Op.between]: [startDateStr, endDateStr],
+                },
+                withdrawal: {
+                    [Op.gt]: 0,
+                },
+            },
+            raw: false,
+        });
+
+        return transactions.map(transaction => {
+            const category =
+                transaction.getDataValue('category') || transaction.category || 'Без категории';
+            const withdrawal =
+                parseFloat(transaction.getDataValue('withdrawal')?.toString() || '0') ||
+                (transaction.withdrawal ? parseFloat(transaction.withdrawal.toString()) : 0);
+
+            return {
+                id: transaction.id,
+                category,
+                amount: withdrawal,
+            };
+        });
+    }
+
     getMonthName(monthIndex: number): { short: string; full: string } {
         const months = [
             { short: 'Янв', full: 'Январь' },
@@ -274,5 +312,25 @@ export class TransactionService extends RepositoryService<Transaction> {
             { short: 'Дек', full: 'Декабрь' },
         ];
         return months[monthIndex];
+    }
+
+    async updateCategory(
+        userId: number,
+        transactionId: number,
+        category: string,
+    ): Promise<void> {
+        const [affectedCount] = await this.repository.update(
+            { category },
+            {
+                where: {
+                    id: transactionId,
+                    userId,
+                },
+            },
+        );
+
+        if (affectedCount === 0) {
+            this.throwNotFoundException();
+        }
     }
 }

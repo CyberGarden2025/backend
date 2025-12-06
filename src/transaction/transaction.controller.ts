@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, ParseIntPipe, Query, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, ParseIntPipe, Query, Body } from '@nestjs/common';
 import { ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
 import { TransactionsResponse } from './response/transaction.response';
@@ -239,5 +239,15 @@ export class TransactionController {
             balance,
             expensesPercentage,
         };
+    }
+
+    @Patch('/:userId/:transactionId/category')
+    async updateCategory(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Param('transactionId', ParseIntPipe) transactionId: number,
+        @Body('category') category: string,
+    ): Promise<{ success: boolean }> {
+        await this.service.updateCategory(userId, transactionId, category);
+        return { success: true };
     }
 }
