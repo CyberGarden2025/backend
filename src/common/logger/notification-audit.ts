@@ -7,7 +7,7 @@ const LOG_FILE = path.join(LOG_DIR, 'notifications.log');
 export type NotificationLogEntry = {
     timestamp: string;
     type: 'send' | 'token_update' | 'client_event';
-    userId?: number;
+    userId?: string;
     tokenMasked?: string;
     status?: 'success' | 'error';
     messageId?: string;

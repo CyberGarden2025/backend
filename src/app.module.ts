@@ -9,10 +9,16 @@ import { NotificationModule } from './notification/notification.module';
 import { MLModule } from './ml/ml.module';
 import { BIModule } from './bi/bi.module';
 import { AIChatModule } from './ai-chat/ai-chat.module';
+import { AuthModule } from './auth/auth.module';
+import { SentryModule } from '@sentry/nestjs/setup';
+import { APP_FILTER } from '@nestjs/core';
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
+import { DiagnosticsModule } from './diagnostics/diagnostics.module';
 
 @Module({
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
+        SentryModule.forRoot(),
         DatabaseModule,
         FirebaseModule,
         NotificationModule,
@@ -22,6 +28,14 @@ import { AIChatModule } from './ai-chat/ai-chat.module';
         MLModule,
         BIModule,
         AIChatModule,
+        AuthModule,
+        DiagnosticsModule,
+    ],
+    providers: [
+        {
+            provide: APP_FILTER,
+            useClass: SentryGlobalFilter,
+        },
     ],
 })
 export class AppModule {}

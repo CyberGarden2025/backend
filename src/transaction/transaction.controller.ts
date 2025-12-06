@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Patch, Param, ParseIntPipe, Query, Body } from '@nestjs/common';
-import { ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Param, Query, Body, ParseIntPipe } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
 import { TransactionsResponse } from './response/transaction.response';
 import { TotalTransactionResponse } from './response/total-transaction.response';
@@ -14,6 +14,7 @@ import { MLService } from '../ml/ml.service';
 import { TransactionCreateDto } from './dto/transaction-create.dto';
 
 @ApiTags('transactions')
+@ApiBearerAuth('keycloak')
 @Controller('transactions')
 export class TransactionController {
     constructor(
@@ -25,13 +26,14 @@ export class TransactionController {
     @ApiParam({
         name: 'userId',
         description: 'ID пользователя',
-        type: Number,
+        type: String,
+        example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b',
     })
     @ApiOkResponse({
         description: 'Список транзакций пользователя, сгруппированных по дате',
         type: [TransactionsResponse],
     })
-    async findAll(@Param('userId', ParseIntPipe) id: number): Promise<TransactionsResponse[]> {
+    async findAll(@Param('userId') id: string): Promise<TransactionsResponse[]> {
         return this.service.getTransactionsGroupedByDate({
             where: {
                 userId: id,
@@ -56,7 +58,8 @@ export class TransactionController {
     @ApiParam({
         name: 'userId',
         description: 'ID пользователя',
-        type: Number,
+        type: String,
+        example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b',
     })
     @ApiQuery({
         name: 'start',
@@ -77,7 +80,7 @@ export class TransactionController {
         type: TotalTransactionResponse,
     })
     async getTotal(
-        @Param('userId', ParseIntPipe) id: number,
+        @Param('userId') id: string,
         @Query() periodDto: TransactionPeriodDto,
     ): Promise<TotalTransactionResponse> {
         return this.service.getTotalTransactions(id, periodDto.start, periodDto.end);
@@ -87,14 +90,15 @@ export class TransactionController {
     @ApiParam({
         name: 'userId',
         description: 'ID пользователя',
-        type: Number,
+        type: String,
+        example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b',
     })
     @ApiOkResponse({
         description: 'Расходы за указанный месяц и прогноз на 7 месяцев',
         type: ExpensesChartResponse,
     })
     async getExpensesChart(
-        @Param('userId', ParseIntPipe) userId: number,
+        @Param('userId') userId: string,
         @Body() dto: ExpensesChartDto,
     ): Promise<ExpensesChartResponse> {
         const [day, month, year] = dto.startDate.split('/').map(Number);
@@ -197,7 +201,7 @@ export class TransactionController {
         type: CategoriesMonthResponse,
     })
     async getCategoriesByMonth(
-        @Param('userId', ParseIntPipe) userId: number,
+        @Param('userId') userId: string,
         @Body() dto: CategoriesMonthDto,
     ): Promise<CategoriesMonthResponse> {
         const [day, month, year] = dto.monthDate.split('/').map(Number);
@@ -245,7 +249,7 @@ export class TransactionController {
         type: MonthSummaryResponse,
     })
     async getMonthSummary(
-        @Param('userId', ParseIntPipe) userId: number,
+        @Param('userId') userId: string,
         @Body() dto: MonthSummaryDto,
     ): Promise<MonthSummaryResponse> {
         const [day, month, year] = dto.monthDate.split('/').map(Number);
@@ -271,7 +275,7 @@ export class TransactionController {
 
     @Patch('/:userId/:transactionId/category')
     async updateCategory(
-        @Param('userId', ParseIntPipe) userId: number,
+        @Param('userId') userId: string,
         @Param('transactionId', ParseIntPipe) transactionId: number,
         @Body('category') category: string,
     ): Promise<{ success: boolean }> {

@@ -25,9 +25,11 @@ import { MessageFilterDto } from './dto/message-filters.dto';
 import { MessageByIdQueryDto } from './dto/message-by-id.dto';
 import { EnqueueMessageResponse } from './responses/enqueue-message.response';
 import { MessagesListResponse, MessageResponse } from './responses/messages-list.response';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('messages')
 @Controller('v1/messages')
+@ApiBearerAuth('keycloak')
 export class AIChatController {
     constructor(private readonly aiChatService: AIChatService) {}
 
