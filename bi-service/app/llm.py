@@ -9,8 +9,7 @@ from app.config import settings
 
 class LLMClient:
     def __init__(self) -> None:
-        if not settings.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY is required for BI service")
+        self.enabled = True
         genai.configure(api_key=settings.gemini_api_key)
         model_name = settings.llm_model.replace("models/", "")
         self._model: Any = genai.GenerativeModel(model_name)
@@ -45,6 +44,17 @@ class LLMClient:
         return text.rstrip(";").strip()
 
 
-llm = LLMClient()
+class DisabledLLM:
+    enabled = False
+
+    def generate_sql(self, *_: str) -> str:
+        raise RuntimeError("LLM is disabled: set GEMINI_API_KEY")
 
 
+def get_llm_client() -> LLMClient | DisabledLLM:
+    if not settings.gemini_api_key:
+        return DisabledLLM()
+    return LLMClient()
+
+
+llm = get_llm_client()
