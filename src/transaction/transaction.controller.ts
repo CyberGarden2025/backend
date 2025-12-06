@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Param, ParseIntPipe, Query, Body } from '@nestjs/common';
 import { ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
-import { TransactionsResponse } from './response/transaction.response';
+import { TransactionResponse, TransactionsResponse } from './response/transaction.response';
 import { TotalTransactionResponse } from './response/total-transaction.response';
 import { TransactionPeriodDto } from './dto/transaction-perios.dto';
 import { ExpensesChartResponse } from './response/expenses-chart.response';
@@ -21,22 +21,30 @@ export class TransactionController {
         private readonly mlService: MLService,
     ) {}
 
-    @Get('/:userId')
-    @ApiParam({
-        name: 'userId',
-        description: 'ID пользователя',
-        type: Number,
-    })
+    @Get()
     @ApiOkResponse({
         description: 'Список транзакций пользователя, сгруппированных по дате',
         type: [TransactionsResponse],
     })
-    async findAll(@Param('userId', ParseIntPipe) id: number): Promise<TransactionsResponse[]> {
+    async findAll(): Promise<TransactionsResponse[]> {
         return this.service.getTransactionsGroupedByDate({
             where: {
-                userId: id,
+                userId: 1,
             },
         });
+    }
+
+    @Get(':id')
+    @ApiOkResponse({
+        description: 'Возвращает транзакцию по id',
+        type: TransactionResponse,
+    })
+    async findOne(@Param('id') id: number): Promise<TransactionResponse> {
+        const transaction = await this.service.findById(id);
+        return {
+            ...transaction,
+            sum: transaction.deposit - transaction.withdrawal,
+        };
     }
 
     @Post('/:userId')
