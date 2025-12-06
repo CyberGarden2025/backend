@@ -1,6 +1,11 @@
-import { Controller, Post, Body, Param, Patch, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, ParseIntPipe, Get, Query } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { UserService } from 'src/user/user.service';
+import {
+    appendNotificationLog,
+    maskToken,
+    readNotificationLogs,
+} from 'src/common/logger/notification-audit';
 
 @Controller('notifications')
 export class NotificationController {
@@ -21,14 +26,43 @@ export class NotificationController {
     ) {
         const userToken = await this.getUserToken(body.userId);
 
-        return this.notificationService.sendNotification(
-            userToken,
-            {
-                title: body.title,
-                body: body.body,
-            },
-            body.data,
-        );
+        try {
+            const response = await this.notificationService.sendNotification(
+                userToken,
+                {
+                    title: body.title,
+                    body: body.body,
+                },
+                body.data,
+            );
+
+            await appendNotificationLog({
+                timestamp: new Date().toISOString(),
+                type: 'send',
+                userId: body.userId,
+                tokenMasked: maskToken(userToken),
+                status: 'success',
+                messageId: response.responses?.[0]?.messageId,
+                meta: {
+                    title: body.title,
+                },
+            });
+
+            return response;
+        } catch (error: any) {
+            await appendNotificationLog({
+                timestamp: new Date().toISOString(),
+                type: 'send',
+                userId: body.userId,
+                tokenMasked: maskToken(userToken),
+                status: 'error',
+                error: error?.message || 'Send failed',
+                meta: {
+                    title: body.title,
+                },
+            });
+            throw error;
+        }
     }
 
     @Post('topic/:topic')
@@ -56,7 +90,60 @@ export class NotificationController {
         @Body('userId', ParseIntPipe) userId: number,
         @Body('fcmToken') fcmToken: string,
     ) {
-        return this.userService.update(userId, { fcmToken });
+        try {
+            const updated = await this.userService.update(userId, { fcmToken });
+
+            await appendNotificationLog({
+                timestamp: new Date().toISOString(),
+                type: 'token_update',
+                userId,
+                tokenMasked: maskToken(fcmToken),
+                status: 'success',
+            });
+
+            return updated;
+        } catch (error: any) {
+            await appendNotificationLog({
+                timestamp: new Date().toISOString(),
+                type: 'token_update',
+                userId,
+                tokenMasked: maskToken(fcmToken),
+                status: 'error',
+                error: error?.message || 'Token update failed',
+            });
+            throw error;
+        }
+    }
+
+    @Get('debug/logs')
+    async getNotificationLogs(@Query('limit') limit?: string) {
+        const parsedLimit = limit ? Number(limit) : 50;
+        const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 50;
+        return readNotificationLogs(safeLimit);
+    }
+
+    @Post('debug/client-log')
+    async clientLog(
+        @Body()
+        body: {
+            event: string;
+            userId?: number;
+            token?: string;
+            payload?: Record<string, unknown>;
+        },
+    ) {
+        await appendNotificationLog({
+            timestamp: new Date().toISOString(),
+            type: 'client_event',
+            userId: body.userId,
+            tokenMasked: maskToken(body.token),
+            status: 'success',
+            meta: {
+                event: body.event,
+                payload: body.payload,
+            },
+        });
+        return { ok: true };
     }
 
     private async getUserToken(userId: number): Promise<string> {

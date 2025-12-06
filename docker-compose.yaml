@@ -24,6 +24,7 @@ services:
       - 8001:8001
     restart: unless-stopped
     volumes:
+        - ./logs:/app/logs
         - ./ml-service/app/weights:/app/app/weights
     networks:
         - backend
