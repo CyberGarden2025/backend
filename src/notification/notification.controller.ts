@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Patch, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, ParseIntPipe } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { UserService } from 'src/user/user.service';
 
@@ -13,7 +13,7 @@ export class NotificationController {
     async sendNotification(
         @Body()
         body: {
-            userId: string;
+            userId: number;
             title: string;
             body: string;
             data?: Record<string, string>;
@@ -53,20 +53,19 @@ export class NotificationController {
 
     @Patch('token')
     async updateFcmToken(
-        @Param('userId', ParseUUIDPipe) userId: number,
-        @Body()
-        body: {
-            fcmToken: string;
-        },
+        @Body('userId', ParseIntPipe) userId: number,
+        @Body('fcmToken') fcmToken: string,
     ) {
-        return this.userService.update(userId, { fcmToken: body.fcmToken });
+        return this.userService.update(userId, { fcmToken });
     }
 
-    private async getUserToken(userId: string): Promise<string> {
-        return this.userService.findOne({
+    private async getUserToken(userId: number): Promise<string> {
+        const user = await this.userService.findOne({
             where: {
                 id: userId,
             },
         });
+
+        return user.fcmToken;
     }
 }

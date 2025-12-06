@@ -11,8 +11,8 @@ import { NotificationModule } from './notification/notification.module';
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         DatabaseModule,
-        // FirebaseModule,
-        // NotificationModule,
+        FirebaseModule,
+        NotificationModule,
         UserModule,
         TransactionModule,
         SetupManagerModule,
