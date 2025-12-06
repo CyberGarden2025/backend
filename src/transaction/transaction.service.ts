@@ -92,13 +92,14 @@ export class TransactionService extends RepositoryService<Transaction> {
         return result.sort((a, b) => b.date.getTime() - a.date.getTime());
     }
 
-    async getTotalTransactions(userId: number): Promise<TotalTransactionResponse> {
-        // Фиксированный месяц: август 2023
-        const startOfMonth = new Date(2023, 7, 1); // Месяц в Date начинается с 0, поэтому 7 = август
-        const endOfMonth = new Date(2023, 8, 0); // 8 месяц (сентябрь), 0 день = последний день августа
-
-        const startDateStr = startOfMonth.toISOString().split('T')[0];
-        const endDateStr = endOfMonth.toISOString().split('T')[0];
+    async getTotalTransactions(
+        userId: number,
+        startDate: string,
+        endDate: string,
+    ): Promise<TotalTransactionResponse> {
+        // Нормализуем даты (убираем время, если есть)
+        const startDateStr = startDate.split('T')[0];
+        const endDateStr = endDate.split('T')[0];
 
         const transactions = await this.repository.findAll({
             where: {

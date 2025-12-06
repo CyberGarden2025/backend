@@ -1,11 +1,12 @@
-import { Controller, Get, Param, ParseIntPipe, ParseUUIDPipe } from '@nestjs/common';
-import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
 import { TransactionsResponse } from './response/transaction.response';
 import { TotalTransactionResponse } from './response/total-transaction.response';
+import { TransactionPeriodDto } from './dto/transaction-perios.dto';
 
 @ApiTags('transactions')
-@Controller()
+@Controller('transactions')
 export class TransactionController {
     constructor(private readonly service: TransactionService) {}
 
@@ -33,11 +34,28 @@ export class TransactionController {
         description: 'ID пользователя',
         type: Number,
     })
+    @ApiQuery({
+        name: 'start',
+        description: 'Начальная дата периода (YYYY-MM-DD)',
+        example: '2023-08-01',
+        type: String,
+        required: true,
+    })
+    @ApiQuery({
+        name: 'end',
+        description: 'Конечная дата периода (YYYY-MM-DD)',
+        example: '2023-08-31',
+        type: String,
+        required: true,
+    })
     @ApiOkResponse({
-        description: 'Доходы и расходы за текущий месяц',
+        description: 'Доходы и расходы за указанный период',
         type: TotalTransactionResponse,
     })
-    async getTotal(@Param('userId', ParseIntPipe) id: number): Promise<TotalTransactionResponse> {
-        return this.service.getTotalTransactions(id);
+    async getTotal(
+        @Param('userId', ParseIntPipe) id: number,
+        @Query() periodDto: TransactionPeriodDto,
+    ): Promise<TotalTransactionResponse> {
+        return this.service.getTotalTransactions(id, periodDto.start, periodDto.end);
     }
 }
