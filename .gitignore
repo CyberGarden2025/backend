@@ -7,4 +7,6 @@ node_modules/
 [._]sw[a-p]
 
 .env
+logs/
+logs/notifications.log
 logs/notifications.log
