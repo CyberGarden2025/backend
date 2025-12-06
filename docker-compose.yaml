@@ -67,7 +67,7 @@ networks:
         driver: bridge
     keycloak:
         external: true
-        name: keycloack_keycloak-network
+        name: key-cloack_keycloak-network
 
 # VOLUMES
 volumes:
