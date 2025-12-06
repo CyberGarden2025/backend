@@ -50,13 +50,42 @@ export default class User extends Model {
         type: DataType.FLOAT,
         allowNull: true,
     })
-    transactionLimit?: string;
+    transactionLimit?: number;
 
     @Column({
         type: DataType.STRING,
         allowNull: true,
     })
     fcmToken: string;
+
+    @Column({
+        type: DataType.FLOAT,
+        allowNull: true,
+        defaultValue: 0,
+        field: 'financialCushion',
+    })
+    financialCushion: number;
+
+    @Column({
+        type: DataType.JSONB,
+        allowNull: true,
+        defaultValue: {},
+        field: 'categoryLimits',
+    })
+    categoryLimits: Record<string, number>;
+
+    @Column({
+        type: DataType.JSONB,
+        allowNull: true,
+        defaultValue: {},
+        field: 'notificationSettings',
+    })
+    notificationSettings: {
+        categoryLimitWarning: boolean;
+        financialCushionWarning: boolean;
+        anomalousTransactionAlert: boolean;
+        monthlyReport: boolean;
+    };
 
     @HasMany(() => Transaction)
     transactions: Transaction[];

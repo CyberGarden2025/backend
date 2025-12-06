@@ -27,6 +27,19 @@ services:
         - ./ml-service/app/weights:/app/app/weights
     networks:
         - backend
+  bi-service:
+    build:
+        context: ./bi-service
+        dockerfile: Dockerfile
+    container_name: bi-service
+    env_file: .env
+    depends_on:
+      - postgres
+    ports:
+      - 8002:8002
+    restart: unless-stopped
+    networks:
+      - backend
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped

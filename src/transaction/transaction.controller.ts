@@ -1,14 +1,24 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, ParseIntPipe, Query, Body } from '@nestjs/common';
 import { ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
 import { TransactionsResponse } from './response/transaction.response';
 import { TotalTransactionResponse } from './response/total-transaction.response';
 import { TransactionPeriodDto } from './dto/transaction-perios.dto';
+import { ExpensesChartResponse } from './response/expenses-chart.response';
+import { ExpensesChartDto } from './dto/expenses-chart.dto';
+import { CategoriesMonthResponse } from './response/categories-month.response';
+import { CategoriesMonthDto } from './dto/categories-month.dto';
+import { MonthSummaryResponse } from './response/month-summary.response';
+import { MonthSummaryDto } from './dto/month-summary.dto';
+import { MLService } from '../ml/ml.service';
 
 @ApiTags('transactions')
 @Controller('transactions')
 export class TransactionController {
-    constructor(private readonly service: TransactionService) {}
+    constructor(
+        private readonly service: TransactionService,
+        private readonly mlService: MLService,
+    ) {}
 
     @Get('/:userId')
     @ApiParam({
@@ -57,5 +67,177 @@ export class TransactionController {
         @Query() periodDto: TransactionPeriodDto,
     ): Promise<TotalTransactionResponse> {
         return this.service.getTotalTransactions(id, periodDto.start, periodDto.end);
+    }
+
+    @Post('/:userId/expenses-chart')
+    @ApiParam({
+        name: 'userId',
+        description: 'ID пользователя',
+        type: Number,
+    })
+    @ApiOkResponse({
+        description: 'Расходы за указанный месяц и прогноз на 7 месяцев',
+        type: ExpensesChartResponse,
+    })
+    async getExpensesChart(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Body() dto: ExpensesChartDto,
+    ): Promise<ExpensesChartResponse> {
+        const [day, month, year] = dto.startDate.split('/').map(Number);
+        const baseDate = new Date(year, month - 1, day);
+        const currentYear = baseDate.getFullYear();
+        const currentMonth = baseDate.getMonth();
+
+        const months: Array<{ date: Date; isPrediction: boolean }> = [];
+
+        for (let i = -4; i <= 2; i++) {
+            const monthDate = new Date(currentYear, currentMonth + i, 1);
+            months.push({
+                date: monthDate,
+                isPrediction: i > 0,
+            });
+        }
+
+        const queryStartDate = months[0].date;
+        const queryEndDate = new Date(months[months.length - 1].date.getFullYear(), months[months.length - 1].date.getMonth() + 1, 0);
+
+        const monthlyExpenses = await this.service.getExpensesByMonth(userId, queryStartDate, queryEndDate);
+
+        const monthData = months.map(({ date, isPrediction }) => {
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const amount = monthlyExpenses.get(monthKey) || 0;
+            const monthInfo = this.service.getMonthName(date.getMonth());
+
+            return {
+                month: monthInfo.short,
+                monthFull: monthInfo.full,
+                year: date.getFullYear(),
+                amount: Math.round(amount * 100) / 100,
+                isPrediction,
+            };
+        });
+
+        const currentMonthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        const currentMonthExpenses = monthlyExpenses.get(currentMonthKey) || 0;
+
+        const futureMonths = monthData.filter(m => m.isPrediction);
+        if (futureMonths.length > 0) {
+            const allTransactions = await this.service.findAll({
+                where: { userId },
+                order: [['transactionDate', 'DESC']],
+                limit: 100,
+            });
+
+            const forecastData = await this.mlService.getFinancialForecast({
+                userId,
+                transactions: allTransactions.map(t => ({
+                    transactionDate: t.transactionDate instanceof Date
+                        ? t.transactionDate.toISOString().split('T')[0]
+                        : t.transactionDate.toString(),
+                    category: t.category || '',
+                    refNo: t.refNo || undefined,
+                    withdrawal: t.withdrawal || 0,
+                    deposit: t.deposit || 0,
+                    balance: t.balance || 0,
+                })),
+                currentBalance: allTransactions[0]?.balance || 0,
+                forecastMonths: 2,
+            });
+
+            if (forecastData && forecastData.forecast) {
+                forecastData.forecast.forEach((prediction: any, index: number) => {
+                    if (index < futureMonths.length) {
+                        futureMonths[index].amount = Math.round(prediction.predicted_expenses * 100) / 100;
+                    }
+                });
+            }
+        }
+
+        return {
+            currentMonthExpenses: Math.round(currentMonthExpenses * 100) / 100,
+            months: monthData,
+        };
+    }
+
+    @Post('/:userId/categories-month')
+    @ApiParam({
+        name: 'userId',
+        description: 'ID пользователя',
+        type: Number,
+    })
+    @ApiOkResponse({
+        description: 'Расходы по категориям за указанный месяц',
+        type: CategoriesMonthResponse,
+    })
+    async getCategoriesByMonth(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Body() dto: CategoriesMonthDto,
+    ): Promise<CategoriesMonthResponse> {
+        const [day, month, year] = dto.monthDate.split('/').map(Number);
+        const monthDate = new Date(year, month - 1, day);
+
+        const categoryExpenses = await this.service.getExpensesByCategoryForMonth(
+            userId,
+            year,
+            month,
+        );
+
+        const totalExpenses = Array.from(categoryExpenses.values()).reduce(
+            (sum, amount) => sum + amount,
+            0,
+        );
+
+        const categories = Array.from(categoryExpenses.entries())
+            .map(([category, amount]) => ({
+                category,
+                amount: Math.round(amount * 100) / 100,
+                percentage: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100 * 10) / 10 : 0,
+            }))
+            .sort((a, b) => b.amount - a.amount);
+
+        const monthInfo = this.service.getMonthName(monthDate.getMonth());
+
+        return {
+            month: monthInfo.short,
+            monthFull: monthInfo.full,
+            year,
+            totalExpenses: Math.round(totalExpenses * 100) / 100,
+            categories,
+        };
+    }
+
+    @Post('/:userId/month-summary')
+    @ApiParam({
+        name: 'userId',
+        description: 'ID пользователя',
+        type: Number,
+    })
+    @ApiOkResponse({
+        description: 'Поступления и расходы за указанный месяц',
+        type: MonthSummaryResponse,
+    })
+    async getMonthSummary(
+        @Param('userId', ParseIntPipe) userId: number,
+        @Body() dto: MonthSummaryDto,
+    ): Promise<MonthSummaryResponse> {
+        const [day, month, year] = dto.monthDate.split('/').map(Number);
+        const monthDate = new Date(year, month - 1, day);
+
+        const { income, expenses } = await this.service.getMonthSummary(userId, year, month);
+
+        const balance = income - expenses;
+        const expensesPercentage = income > 0 ? Math.round((expenses / income) * 100 * 10) / 10 : 0;
+
+        const monthInfo = this.service.getMonthName(monthDate.getMonth());
+
+        return {
+            month: monthInfo.short,
+            monthFull: monthInfo.full,
+            year,
+            income,
+            expenses,
+            balance,
+            expensesPercentage,
+        };
     }
 }
