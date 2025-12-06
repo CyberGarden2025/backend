@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Patch, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, Get, Query, ParseIntPipe } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { UserService } from 'src/user/user.service';
 import {
@@ -18,7 +18,7 @@ export class NotificationController {
     async sendNotification(
         @Body()
         body: {
-            userId: string;
+            userId: number;
             title: string;
             body: string;
             data?: Record<string, string>;
@@ -39,7 +39,7 @@ export class NotificationController {
             await appendNotificationLog({
                 timestamp: new Date().toISOString(),
                 type: 'send',
-                userId: body.userId,
+                userId: String(body.userId),
                 tokenMasked: maskToken(userToken),
                 status: 'success',
                 messageId: response.responses?.[0]?.messageId,
@@ -53,7 +53,7 @@ export class NotificationController {
             await appendNotificationLog({
                 timestamp: new Date().toISOString(),
                 type: 'send',
-                userId: body.userId,
+                userId: String(body.userId),
                 tokenMasked: maskToken(userToken),
                 status: 'error',
                 error: error?.message || 'Send failed',
@@ -86,10 +86,7 @@ export class NotificationController {
     }
 
     @Patch('token')
-    async updateFcmToken(
-        @Body('userId') userId: string,
-        @Body('fcmToken') fcmToken: string,
-    ) {
+    async updateFcmToken(@Body('userId') userId: string, @Body('fcmToken') fcmToken: string) {
         try {
             const updated = await this.userService.update(userId, { fcmToken });
 
@@ -148,16 +145,16 @@ export class NotificationController {
 
     @Post('check/:userId')
     async checkNotifications(
-        @Param('userId') userId: string,
+        @Param('userId', ParseIntPipe) userId: number,
         @Body()
         body: {
             monthDate: string;
         },
     ) {
-        return this.notificationService.checkUserNotifications(userId, body.monthDate);
+        return this.notificationService.checkUserNotifications(String(userId), body.monthDate);
     }
 
-    private async getUserToken(userId: string): Promise<string> {
+    private async getUserToken(userId: number): Promise<string> {
         const user = await this.userService.findById(userId);
         if (!user.fcmToken) {
             throw new Error('FCM токен не найден у пользователя');

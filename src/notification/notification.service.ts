@@ -48,7 +48,9 @@ export class NotificationService {
 
         try {
             const response = await admin.messaging().sendEachForMulticast(message);
-            this.logger.log(`Успешно отправлено: ${response.successCount}, Неудачно: ${response.failureCount}`);
+            this.logger.log(
+                `Успешно отправлено: ${response.successCount}, Неудачно: ${response.failureCount}`,
+            );
             return response;
         } catch (error) {
             this.logger.error(`Ошибка отправки: ${error.message}`);
@@ -97,7 +99,7 @@ export class NotificationService {
         const yearNum = checkDate.getFullYear();
         const monthNum = checkDate.getMonth() + 1;
 
-        const user = await this.userService.findById(userId);
+        const user = await this.userService.findById(+userId);
 
         const defaultNotificationSettings = {
             categoryLimitWarning: true,
@@ -122,12 +124,11 @@ export class NotificationService {
 
         // Категории и лимиты
         if (notificationSettings.categoryLimitWarning && hasCategoryLimits) {
-            const categoryExpensesMap =
-                await this.transactionService.getExpensesByCategoryForMonth(
-                    userId,
-                    yearNum,
-                    monthNum,
-                );
+            const categoryExpensesMap = await this.transactionService.getExpensesByCategoryForMonth(
+                userId,
+                yearNum,
+                monthNum,
+            );
 
             Object.entries(categoryLimits).forEach(([category, limit]) => {
                 if (!limit || limit <= 0) {
@@ -212,12 +213,11 @@ export class NotificationService {
 
         // Аномальные транзакции (простое правило)
         if (notificationSettings.anomalousTransactionAlert) {
-            const withdrawals =
-                await this.transactionService.getWithdrawalsForMonthWithIds(
-                    userId,
-                    yearNum,
-                    monthNum,
-                );
+            const withdrawals = await this.transactionService.getWithdrawalsForMonthWithIds(
+                userId,
+                yearNum,
+                monthNum,
+            );
 
             const statsByCategory = new Map<
                 string,

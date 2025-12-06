@@ -7,9 +7,9 @@ export class UserService {
 
     constructor(private readonly kcUserService: KeycloakUserService) {}
 
-    async findById(id: string): Promise<KeycloakUserProfile> {
+    async findById(id: number): Promise<KeycloakUserProfile> {
         try {
-            return await this.kcUserService.findById(id);
+            return await this.kcUserService.findById(String(id));
         } catch (error) {
             this.logger.warn(`User ${id} not found in Keycloak: ${error}`);
             throw new NotFoundException('User not found');

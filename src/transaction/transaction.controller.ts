@@ -282,7 +282,7 @@ export class TransactionController {
 
     @Patch('/:userId/:transactionId/category')
     async updateCategory(
-        @Param('userId') userId: string,
+        @Param('userId', ParseIntPipe) userId: number,
         @Param('transactionId', ParseIntPipe) transactionId: number,
         @Body('category') category: string,
     ): Promise<{ success: boolean }> {

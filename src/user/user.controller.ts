@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { UserService } from './user.service';
@@ -22,7 +22,7 @@ export class UserController {
         description: 'Профиль пользователя для фронта / Firebase',
         type: FirebaseUserDto,
     })
-    async getProfile(@Param('id') id: string): Promise<FirebaseUserDto> {
+    async getProfile(@Param('id', ParseIntPipe) id: number): Promise<FirebaseUserDto> {
         const user = await this.userService.findById(id);
         return this.toFirebaseDto(user as any);
     }
@@ -77,8 +77,7 @@ export class UserController {
             balance: user.balance ?? 0,
             financialCushion: user.financialCushion ?? 0,
             categoryLimits: user.categoryLimits ?? {},
-            notificationSettings:
-                user.notificationSettings ?? defaultNotificationSettings,
+            notificationSettings: user.notificationSettings ?? defaultNotificationSettings,
             fcmToken: user.fcmToken,
         };
     }

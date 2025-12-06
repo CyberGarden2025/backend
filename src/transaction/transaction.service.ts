@@ -87,7 +87,7 @@ export class TransactionService extends RepositoryService<Transaction> {
         });
 
         // Обновляем баланс пользователя
-        await this.userService.update(user, {
+        await this.userService.update(user.id, {
             balance: newBalance,
         });
 
