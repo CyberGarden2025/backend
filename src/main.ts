@@ -30,8 +30,10 @@ async function bootstrap() {
     });
 
     app.enableCors({
-        origin: `${frontendHost}`,
+        origin: frontendHost || 'http://localhost:4200',
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     });
 
     await app.listen(port || 3000);
