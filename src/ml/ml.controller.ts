@@ -1,9 +1,10 @@
 import { Controller, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { MLService, PredictResponse } from './ml.service';
 import { PredictDto } from './dto/predict.dto';
 
 @ApiTags('ml')
+@ApiBearerAuth('keycloak')
 @Controller('ml')
 export class MLController {
     constructor(private readonly mlService: MLService) {}
@@ -54,4 +55,3 @@ export class MLController {
         });
     }
 }
-

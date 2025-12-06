@@ -27,7 +27,18 @@ async function bootstrap() {
             .filter((origin): origin is string => Boolean(origin)) || ['http://localhost:4200'];
     app.setGlobalPrefix('api');
 
-    const config = new DocumentBuilder().setTitle('Banking API').setVersion('1.0').build();
+    const config = new DocumentBuilder()
+        .setTitle('Banking API')
+        .setVersion('1.0')
+        .addBearerAuth(
+            {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT',
+            },
+            'keycloak',
+        )
+        .build();
     const document = SwaggerModule.createDocument(app, config);
 
     app.useGlobalPipes(

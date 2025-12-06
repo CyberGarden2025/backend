@@ -6,13 +6,14 @@ import {
     ParseIntPipe,
     Put,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { UserService } from './user.service';
 import { FirebaseUserDto } from './dto/firebase-user.dto';
 import { UpdateUserSettingsDto } from './dto/user-settings.dto';
 
 @ApiTags('users')
+@ApiBearerAuth('keycloak')
 @Controller('users')
 export class UserController {
     constructor(private readonly userService: UserService) {}
@@ -80,5 +81,4 @@ export class UserController {
         };
     }
 }
-
 

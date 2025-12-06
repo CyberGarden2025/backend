@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Patch, Param, ParseIntPipe, Query, Body } from '@nestjs/common';
-import { ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
 import { TransactionsResponse } from './response/transaction.response';
 import { TotalTransactionResponse } from './response/total-transaction.response';
@@ -13,6 +13,7 @@ import { MonthSummaryDto } from './dto/month-summary.dto';
 import { MLService } from '../ml/ml.service';
 
 @ApiTags('transactions')
+@ApiBearerAuth('keycloak')
 @Controller('transactions')
 export class TransactionController {
     constructor(
