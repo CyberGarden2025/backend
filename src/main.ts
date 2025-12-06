@@ -3,6 +3,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -12,7 +13,21 @@ async function bootstrap() {
 
     const config = new DocumentBuilder().setTitle('Banking API').setVersion('1.0').build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('docs', app, document);
+
+    app.useGlobalPipes(
+        new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+        }),
+    );
+
+    SwaggerModule.setup('api', app, document, {
+        swaggerOptions: {
+            persistAuthorization: true,
+        },
+        customSiteTitle: 'Banking API Documentation',
+    });
 
     app.enableCors({
         origin: `${frontendHost}`,

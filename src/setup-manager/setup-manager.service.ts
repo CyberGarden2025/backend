@@ -127,9 +127,54 @@ export class SetupManagerService implements OnModuleInit {
             return new Date();
         }
 
-        // Формат "M/D/YYYY"
-        const [month, day, year] = dateString.split('/');
-        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        const parts = dateString.split('/').map(part => part.trim());
+
+        if (parts.length !== 3) {
+            this.logger.warn(`Invalid date format: ${dateString}`);
+            return new Date();
+        }
+
+        let month: number;
+        let day: number;
+        let year: number;
+
+        // Определяем формат по длине года
+        if (parts[2].length === 4) {
+            // Формат "M/D/YYYY" или "MM/DD/YYYY"
+            month = parseInt(parts[0]);
+            day = parseInt(parts[1]);
+            year = parseInt(parts[2]);
+        } else if (parts[2].length === 2) {
+            // Формат "DD/MM/YY"
+            day = parseInt(parts[0]);
+            month = parseInt(parts[1]);
+            const twoDigitYear = parseInt(parts[2]);
+
+            // Если год меньше 50, считаем его 2000-м, иначе 1900-м
+            year = twoDigitYear < 50 ? 2000 + twoDigitYear : 1900 + twoDigitYear;
+        } else {
+            this.logger.warn(`Unknown date format: ${dateString}`);
+            return new Date();
+        }
+
+        // Проверяем валидность даты
+        if (isNaN(month) || isNaN(day) || isNaN(year)) {
+            this.logger.warn(`Invalid date values: ${dateString}`);
+            return new Date();
+        }
+
+        const date = new Date(year, month - 1, day);
+
+        // Проверяем, что дата была корректно создана
+        if (
+            date.getFullYear() !== year ||
+            date.getMonth() !== month - 1 ||
+            date.getDate() !== day
+        ) {
+            this.logger.warn(`Invalid date: ${dateString}, parsed as: ${date.toISOString()}`);
+        }
+
+        return date;
     }
 
     private parseNumber(value: string): number {
