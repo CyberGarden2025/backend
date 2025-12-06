@@ -52,6 +52,12 @@ export default class User extends Model {
     })
     transactionLimit?: string;
 
+    @Column({
+        type: DataType.STRING,
+        allowNull: true,
+    })
+    fcmToken: string;
+
     @HasMany(() => Transaction)
     transactions: Transaction[];
 }
