@@ -1,13 +1,4 @@
-import {
-    Table,
-    Column,
-    Model,
-    DataType,
-    ForeignKey,
-    BelongsTo,
-    DefaultScope,
-} from 'sequelize-typescript';
-import User from '../user/user.model';
+import { Table, Column, Model, DataType } from 'sequelize-typescript';
 
 @Table({
     tableName: 'transactions',
@@ -29,20 +20,20 @@ export default class Transaction extends Model {
         allowNull: false,
         field: 'transactionDate',
     })
-    transactionDate: Date;
+    declare transactionDate: Date;
 
     @Column({
         type: DataType.STRING,
         allowNull: false,
     })
-    category: string;
+    declare category: string;
 
     @Column({
         type: DataType.STRING,
         allowNull: true,
         field: 'refNo',
     })
-    refNo: string;
+    declare refNo: string;
 
     @Column({
         type: DataType.DECIMAL(10, 2),
@@ -53,7 +44,7 @@ export default class Transaction extends Model {
             return value ? parseFloat(value) : 0;
         },
     })
-    withdrawal!: number;
+    declare withdrawal: number;
 
     @Column({
         type: DataType.DECIMAL(10, 2),
@@ -64,7 +55,7 @@ export default class Transaction extends Model {
             return value ? parseFloat(value) : 0;
         },
     })
-    deposit: number;
+    declare deposit: number;
 
     @Column({
         type: DataType.DECIMAL(10, 2),
@@ -74,16 +65,12 @@ export default class Transaction extends Model {
             return value ? parseFloat(value) : 0;
         },
     })
-    balance: number;
+    declare balance: number;
 
-    @ForeignKey(() => User)
     @Column({
-        type: DataType.INTEGER,
+        type: DataType.STRING,
         allowNull: false,
         field: 'userId',
     })
-    userId: number;
-
-    @BelongsTo(() => User)
-    user!: User;
+    declare userId: string;
 }

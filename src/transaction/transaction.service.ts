@@ -94,7 +94,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getTotalTransactions(
-        userId: number,
+        userId: string,
         startDate: string,
         endDate: string,
     ): Promise<TotalTransactionResponse> {
@@ -137,7 +137,11 @@ export class TransactionService extends RepositoryService<Transaction> {
         };
     }
 
-    async getExpensesByMonth(userId: number, startDate: Date, endDate: Date): Promise<Map<string, number>> {
+    async getExpensesByMonth(
+        userId: string,
+        startDate: Date,
+        endDate: Date,
+    ): Promise<Map<string, number>> {
         const startDateStr = startDate.toISOString().split('T')[0];
         const endDateStr = endDate.toISOString().split('T')[0];
 
@@ -177,7 +181,11 @@ export class TransactionService extends RepositoryService<Transaction> {
         return monthlyExpenses;
     }
 
-    async getMonthSummary(userId: number, year: number, month: number): Promise<{ income: number; expenses: number }> {
+    async getMonthSummary(
+        userId: string,
+        year: number,
+        month: number,
+    ): Promise<{ income: number; expenses: number }> {
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0);
         const startDateStr = startDate.toISOString().split('T')[0];
@@ -219,7 +227,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getExpensesByCategoryForMonth(
-        userId: number,
+        userId: string,
         year: number,
         month: number,
     ): Promise<Map<string, number>> {
@@ -259,7 +267,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getWithdrawalsForMonthWithIds(
-        userId: number,
+        userId: string,
         year: number,
         month: number,
     ): Promise<Array<{ id: number; category: string; amount: number }>> {
@@ -314,11 +322,7 @@ export class TransactionService extends RepositoryService<Transaction> {
         return months[monthIndex];
     }
 
-    async updateCategory(
-        userId: number,
-        transactionId: number,
-        category: string,
-    ): Promise<void> {
+    async updateCategory(userId: string, transactionId: number, category: string): Promise<void> {
         const [affectedCount] = await this.repository.update(
             { category },
             {

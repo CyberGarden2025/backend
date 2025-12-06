@@ -1,8 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class FirebaseUserDto {
-    @ApiProperty({ description: 'ID пользователя', example: 1 })
-    id: number;
+    @ApiProperty({
+        description: 'ID пользователя (Keycloak UUID)',
+        example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b',
+    })
+    id: string;
 
     @ApiProperty({ description: 'Email пользователя', example: 'user@example.com' })
     email: string;
@@ -41,4 +44,3 @@ export class FirebaseUserDto {
     @ApiProperty({ description: 'FCM токен для уведомлений', example: 'fcm_token_here' })
     fcmToken?: string;
 }
-

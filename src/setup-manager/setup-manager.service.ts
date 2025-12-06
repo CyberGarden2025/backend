@@ -34,19 +34,27 @@ export class SetupManagerService implements OnModuleInit {
             username: 'testUser',
             password: 'aeboba',
         };
-        const user = await this.userService
-            .findOne({ where: { email: data.email } })
-            .catch(() => null);
+        const user =
+            (await this.userService.findOne({ where: { email: data.email } })) ||
+            (await this.userService.findOne({ where: { email: 'admin@example.com' } })) || // fallback to realm default
+            null;
 
         if (!user) {
-            await this.userService.createUser(data);
-            await this.createCsvTransactions();
+            const created = await this.userService.createUser(data).catch(err => {
+                this.logger.warn(`Default user already exists or cannot be created: ${err?.message}`);
+                return null;
+            });
+            if (!created) {
+                return;
+            }
+            await this.createCsvTransactions(created.id);
         } else {
-            this.logger.log('User is found. Skipping create transactions');
+            this.logger.log(`User is found. Skipping create transactions (id=${user.id})`);
+            await this.createCsvTransactions(user.id);
         }
     }
 
-    async createCsvTransactions() {
+    async createCsvTransactions(userId: string) {
         try {
             const filePath = join(__dirname, '..', '..', 'data', 'ci_data.csv');
 
@@ -71,18 +79,7 @@ export class SetupManagerService implements OnModuleInit {
             });
 
             // Находим пользователя для привязки транзакций
-            const user = await this.userService
-                .findOne({
-                    where: { email: 'admin@mail.ru' },
-                })
-                .catch(() => null);
-
-            if (!user) {
-                this.logger.error('User not found for transactions');
-                return;
-            }
-
-            this.logger.log(`User found: ${user.email}, ID: ${user.id}`);
+            this.logger.log(`Using user id=${userId} for CSV import`);
 
             let createdCount = 0;
             let errorCount = 0;
@@ -102,7 +99,7 @@ export class SetupManagerService implements OnModuleInit {
                         withdrawal: this.parseNumber(record.Withdrawal),
                         deposit: this.parseNumber(record.Deposit),
                         balance: this.parseNumber(record.Balance),
-                        userId: user.id,
+                        userId,
                     };
 
                     await this.transactionService.create(transactionData);
@@ -114,7 +111,7 @@ export class SetupManagerService implements OnModuleInit {
             }
 
             this.logger.log(`CSV import completed: ${createdCount} created, ${errorCount} errors`);
-            await this.userService.update(user, {
+            await this.userService.update(userId, {
                 balance: this.parseNumber(records.at(-1)!.Balance),
             });
         } catch (error) {

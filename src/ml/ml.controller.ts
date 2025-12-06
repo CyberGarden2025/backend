@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { MLService, PredictResponse } from './ml.service';
 import { PredictDto } from './dto/predict.dto';
@@ -34,7 +34,7 @@ export class MLController {
     @Post('forecast/:userId')
     @ApiOperation({ summary: 'Получить финансовый прогноз для пользователя' })
     async getFinancialForecast(
-        @Param('userId', ParseIntPipe) userId: number,
+        @Param('userId') userId: string,
         @Body()
         body: {
             transactions: Array<{
