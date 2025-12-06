@@ -13,10 +13,20 @@ services:
             max-size: 50m
             max-file: 3
     restart: unless-stopped
+    networks:
+        - backend
+  ml-service:
+    build:
+        context: ./ml-service
+        dockerfile: Dockerfile
+    container_name: ml-service
     ports:
-        - "${BACKEND_PORT:-3000}:${BACKEND_PORT:-3000}"
-    # networks:
-    #     - backend
+      - 8001:8001
+    restart: unless-stopped
+    volumes:
+        - ./ml-service/app/weights:/app/app/weights
+    networks:
+        - backend
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
