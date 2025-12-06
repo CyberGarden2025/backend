@@ -21,11 +21,10 @@ async function bootstrap() {
         return `http://${trimmed}`;
     };
 
-    const allowedOrigins =
-        frontendHost
-            ?.split(',')
-            .map(normalizeOrigin)
-            .filter((origin): origin is string => Boolean(origin)) || ['http://localhost:4200'];
+    const allowedOrigins = frontendHost
+        ?.split(',')
+        .map(normalizeOrigin)
+        .filter((origin): origin is string => Boolean(origin)) || ['http://localhost:4200'];
     app.setGlobalPrefix('api');
 
     const config = new DocumentBuilder()
@@ -51,7 +50,7 @@ async function bootstrap() {
     );
     app.useGlobalInterceptors(new LoggingInterceptor());
 
-    SwaggerModule.setup('api', app, document, {
+    SwaggerModule.setup('api-docs', app, document, {
         swaggerOptions: {
             persistAuthorization: true,
         },

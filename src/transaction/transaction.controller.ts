@@ -11,6 +11,7 @@ import { CategoriesMonthDto } from './dto/categories-month.dto';
 import { MonthSummaryResponse } from './response/month-summary.response';
 import { MonthSummaryDto } from './dto/month-summary.dto';
 import { MLService } from '../ml/ml.service';
+import { TransactionCreateDto } from './dto/transaction-create.dto';
 
 @ApiTags('transactions')
 @ApiBearerAuth('keycloak')
@@ -38,6 +39,19 @@ export class TransactionController {
                 userId: id,
             },
         });
+    }
+
+    @Post('/:userId')
+    @ApiParam({
+        name: 'userId',
+        description: 'ID пользователя',
+        type: Number,
+    })
+    @ApiOkResponse({
+        description: 'Транзакция успешно создана',
+    })
+    async create(@Param('userId', ParseIntPipe) userId: number, @Body() dto: TransactionCreateDto) {
+        return this.service.createTransaction(userId, dto);
     }
 
     @Get('/:userId/total')
@@ -103,12 +117,23 @@ export class TransactionController {
         }
 
         const queryStartDate = months[0].date;
-        const queryEndDate = new Date(months[months.length - 1].date.getFullYear(), months[months.length - 1].date.getMonth() + 1, 0);
+        const queryEndDate = new Date(
+            months[months.length - 1].date.getFullYear(),
+            months[months.length - 1].date.getMonth() + 1,
+            0,
+        );
 
-        const monthlyExpenses = await this.service.getExpensesByMonth(userId, queryStartDate, queryEndDate);
+        const monthlyExpenses = await this.service.getExpensesByMonth(
+            userId,
+            queryStartDate,
+            queryEndDate,
+        );
 
         const monthData = months.map(({ date, isPrediction }) => {
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+                2,
+                '0',
+            )}`;
             const amount = monthlyExpenses.get(monthKey) || 0;
             const monthInfo = this.service.getMonthName(date.getMonth());
 
@@ -135,9 +160,10 @@ export class TransactionController {
             const forecastData = await this.mlService.getFinancialForecast({
                 userId,
                 transactions: allTransactions.map(t => ({
-                    transactionDate: t.transactionDate instanceof Date
-                        ? t.transactionDate.toISOString().split('T')[0]
-                        : t.transactionDate.toString(),
+                    transactionDate:
+                        t.transactionDate instanceof Date
+                            ? t.transactionDate.toISOString().split('T')[0]
+                            : t.transactionDate.toString(),
                     category: t.category || '',
                     refNo: t.refNo || undefined,
                     withdrawal: t.withdrawal || 0,
@@ -151,7 +177,8 @@ export class TransactionController {
             if (forecastData && forecastData.forecast) {
                 forecastData.forecast.forEach((prediction: any, index: number) => {
                     if (index < futureMonths.length) {
-                        futureMonths[index].amount = Math.round(prediction.predicted_expenses * 100) / 100;
+                        futureMonths[index].amount =
+                            Math.round(prediction.predicted_expenses * 100) / 100;
                     }
                 });
             }
@@ -195,7 +222,8 @@ export class TransactionController {
             .map(([category, amount]) => ({
                 category,
                 amount: Math.round(amount * 100) / 100,
-                percentage: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100 * 10) / 10 : 0,
+                percentage:
+                    totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100 * 10) / 10 : 0,
             }))
             .sort((a, b) => b.amount - a.amount);
 

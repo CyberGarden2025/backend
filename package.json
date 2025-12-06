@@ -27,7 +27,8 @@
         "reflect-metadata": "0.2",
         "sequelize": "^6.37.7",
         "sequelize-cli": "^6.6.3",
-        "sequelize-typescript": "^2.1.6"
+        "sequelize-typescript": "^2.1.6",
+        "uuid": "^13.0.0"
     },
     "scripts": {
         "build": "nest build",
