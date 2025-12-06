@@ -17,7 +17,7 @@ export interface PredictResponse {
 }
 
 interface ForecastRequest {
-    userId: number;
+    userId: string;
     transactions: Array<{
         transactionDate: string;
         category: string;
@@ -81,4 +81,3 @@ export class MLService {
         }
     }
 }
-

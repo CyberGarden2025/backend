@@ -5,7 +5,6 @@ import {
     FinancialCushionWarningDto,
     AnomalousTransactionDto,
 } from './dto/notification.dto';
-import User from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { TransactionService } from '../transaction/transaction.service';
 
@@ -86,7 +85,7 @@ export class NotificationService {
     }
 
     async checkUserNotifications(
-        userId: number,
+        userId: string,
         monthDate: string,
     ): Promise<{
         categoryWarnings: CategoryLimitWarningDto[];
@@ -98,7 +97,7 @@ export class NotificationService {
         const yearNum = checkDate.getFullYear();
         const monthNum = checkDate.getMonth() + 1;
 
-        const user = (await this.userService.findById(userId)) as unknown as User;
+        const user = await this.userService.findById(userId);
 
         const defaultNotificationSettings = {
             categoryLimitWarning: true,

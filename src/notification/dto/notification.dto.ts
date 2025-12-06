@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CategoryLimitWarningDto {
-    @ApiProperty({ description: 'ID пользователя', example: 1 })
-    userId: number;
+    @ApiProperty({ description: 'ID пользователя', example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b' })
+    userId: string;
 
     @ApiProperty({ description: 'Категория', example: 'Food' })
     category: string;
@@ -18,8 +18,8 @@ export class CategoryLimitWarningDto {
 }
 
 export class FinancialCushionWarningDto {
-    @ApiProperty({ description: 'ID пользователя', example: 1 })
-    userId: number;
+    @ApiProperty({ description: 'ID пользователя', example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b' })
+    userId: string;
 
     @ApiProperty({ description: 'Текущая финансовая подушка', example: 50000 })
     currentCushion: number;
@@ -32,8 +32,8 @@ export class FinancialCushionWarningDto {
 }
 
 export class AnomalousTransactionDto {
-    @ApiProperty({ description: 'ID пользователя', example: 1 })
-    userId: number;
+    @ApiProperty({ description: 'ID пользователя', example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b' })
+    userId: string;
 
     @ApiProperty({ description: 'ID транзакции', example: 123 })
     transactionId: number;
@@ -49,8 +49,8 @@ export class AnomalousTransactionDto {
 }
 
 export class MonthlyReportDto {
-    @ApiProperty({ description: 'ID пользователя', example: 1 })
-    userId: number;
+    @ApiProperty({ description: 'ID пользователя', example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b' })
+    userId: string;
 
     @ApiProperty({ description: 'Месяц', example: 'Декабрь 2023' })
     month: string;
@@ -67,4 +67,3 @@ export class MonthlyReportDto {
     @ApiProperty({ description: 'Топ категории расходов', example: [{ category: 'Food', amount: 30000 }] })
     topCategories: Array<{ category: string; amount: number }>;
 }
-
