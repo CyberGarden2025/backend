@@ -156,7 +156,10 @@ export class TransactionService extends RepositoryService<Transaction> {
                     }
 
                     return {
+                        id: transaction.id,
                         category,
+                        refNo: transaction.refNo,
+                        transactionDate: transaction.transactionDate,
                         sum,
                     };
                 },
