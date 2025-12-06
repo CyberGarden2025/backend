@@ -32,22 +32,22 @@ services:
     restart: unless-stopped
     container_name: pg
     env_file: .env
-    ports:
-      - 5432:5432
+    # ports:
+    #   - 5432:5432
     environment:
         POSTGRES_USER: ${DB_USER}
         POSTGRES_PASSWORD: ${DB_PASSWORD}
         POSTGRES_DB: ${DB_NAME}
     volumes:
         - postgres_data:/var/lib/postgresql/data
-    networks:
-      - backend
+    # networks:
+    #   - backend
 
 
-# NETWORKS
-networks:
-    backend:
-        driver: bridge
+# # NETWORKS
+# networks:
+#     backend:
+#         driver: bridge
 
 # VOLUMES
 volumes:
