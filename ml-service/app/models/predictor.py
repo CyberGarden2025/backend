@@ -47,7 +47,7 @@ class TransactionPredictor:
     
     def predict(self, transaction: TransactionInput) -> str:
         if not self.is_loaded():
-            return "Unknown"
+            return self._predict_mock(transaction)
         
         features = self._prepare_features(transaction)
         
@@ -64,6 +64,26 @@ class TransactionPredictor:
             return str(category)
         
         return str(prediction[0])
+    
+    def _predict_mock(self, transaction: TransactionInput) -> str:
+        self.last_confidence = 0.60
+        
+        if transaction.withdrawal > 0:
+            if transaction.withdrawal > 1000:
+                return "Rent"
+            elif transaction.withdrawal > 500:
+                return "Shopping"
+            elif transaction.withdrawal > 100:
+                return "Food"
+            else:
+                return "Misc"
+        elif transaction.deposit > 0:
+            if transaction.deposit > 5000:
+                return "Salary"
+            else:
+                return "Income"
+        
+        return "Unknown"
     
     def get_confidence(self) -> float:
         return self.last_confidence

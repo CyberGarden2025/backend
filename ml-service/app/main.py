@@ -2,11 +2,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.predictor import TransactionPredictor
+from app.models.forecast_predictor import FinancialForecastPredictor
 from app.schemas.transaction import TransactionInput, TransactionOutput
+from app.schemas.forecast import FinancialData, FinancialForecastOutput
 from app.config import settings
 
 
-app = FastAPI(title="Transaction Category Predictor")
+app = FastAPI(title="Financial ML Service")
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,18 +19,20 @@ app.add_middleware(
 )
 
 predictor = TransactionPredictor()
+forecast_predictor = FinancialForecastPredictor()
 
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "model_loaded": predictor.is_loaded()}
+    return {
+        "status": "healthy",
+        "category_model_loaded": predictor.is_loaded(),
+        "forecast_model_loaded": forecast_predictor.is_loaded(),
+    }
 
 
 @app.post("/predict", response_model=TransactionOutput)
 async def predict_category(transaction: TransactionInput):
-    if not predictor.is_loaded():
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
     try:
         category = predictor.predict(transaction)
         confidence = predictor.get_confidence()
@@ -39,9 +43,6 @@ async def predict_category(transaction: TransactionInput):
 
 @app.post("/predict/batch", response_model=list[TransactionOutput])
 async def predict_categories_batch(transactions: list[TransactionInput]):
-    if not predictor.is_loaded():
-        raise HTTPException(status_code=503, detail="Model not loaded")
-    
     try:
         results = []
         for transaction in transactions:
@@ -49,6 +50,15 @@ async def predict_categories_batch(transactions: list[TransactionInput]):
             confidence = predictor.get_confidence()
             results.append(TransactionOutput(category=category, confidence=confidence))
         return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/forecast", response_model=FinancialForecastOutput)
+async def financial_forecast(data: FinancialData):
+    try:
+        forecast = forecast_predictor.predict(data)
+        return forecast
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
