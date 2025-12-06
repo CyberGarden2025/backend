@@ -8,6 +8,7 @@ import { FirebaseModule } from './notification/firebase/firebase.module';
 import { NotificationModule } from './notification/notification.module';
 import { MLModule } from './ml/ml.module';
 import { BIModule } from './bi/bi.module';
+import { AIChatModule } from './ai-chat/ai-chat.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { BIModule } from './bi/bi.module';
         SetupManagerModule,
         MLModule,
         BIModule,
+        AIChatModule,
     ],
 })
 export class AppModule {}

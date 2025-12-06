@@ -65,11 +65,17 @@ async def health() -> dict[str, Any]:
     return {
         "status": "healthy",
         "tables": db.tables(),
+        "llm_ready": llm.enabled,
     }
 
 
 @app.post("/bi/query", response_model=BIQueryResponse)
 async def bi_query(req: BIQueryRequest) -> BIQueryResponse:
+    if not llm.enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM is disabled: set GEMINI_API_KEY to enable BI queries",
+        )
     try:
         schema_text = db.schema_summary_text()
         sql = llm.generate_sql(req.question, schema_text)
@@ -79,5 +85,4 @@ async def bi_query(req: BIQueryRequest) -> BIQueryResponse:
         return BIQueryResponse(sql=sql, rows=rows, chart=chart)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(exc)) from exc
-
 
