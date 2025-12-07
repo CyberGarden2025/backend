@@ -64,7 +64,10 @@ export class MLService {
     async getFinancialForecast(userId: number, body?: ForecastDto): Promise<any> {
         try {
             const response = await firstValueFrom(
-                this.httpService.post(`${this.mlServiceUrl}/forecast`, { userId, ...body }),
+                this.httpService.post(`${this.mlServiceUrl}/forecast`, {
+                    userId,
+                    forecastMonths: body?.forecastMonths,
+                }),
             );
             return response.data;
         } catch (error) {

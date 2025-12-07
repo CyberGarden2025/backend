@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class ForecastDto {
     @ApiProperty({
         description: 'Количество месяцев',
+        required: false,
     })
-    @IsString({ message: 'Токен должен быть строкой' })
+    @IsOptional()
     forecastMonths?: number;
 }
