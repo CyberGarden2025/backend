@@ -23,6 +23,7 @@ services:
         context: ./ml-service
         dockerfile: Dockerfile
     container_name: ml-service
+    env_file: .env
     ports:
       - 8001:8001
     restart: unless-stopped

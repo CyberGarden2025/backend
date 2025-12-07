@@ -158,27 +158,9 @@ export class TransactionController {
 
         const futureMonths = monthData.filter(m => m.isPrediction);
         if (futureMonths.length > 0) {
-            const allTransactions = await this.service.findAll({
-                where: { userId },
-                order: [['transactionDate', 'DESC']],
-                limit: 100,
-            });
-
             const forecastData = await this.mlService.getFinancialForecast({
                 userId,
-                transactions: allTransactions.map(t => ({
-                    transactionDate:
-                        t.transactionDate instanceof Date
-                            ? t.transactionDate.toISOString().split('T')[0]
-                            : t.transactionDate.toString(),
-                    category: t.category || '',
-                    refNo: t.refNo || undefined,
-                    withdrawal: t.withdrawal || 0,
-                    deposit: t.deposit || 0,
-                    balance: t.balance || 0,
-                })),
-                currentBalance: allTransactions[0]?.balance || 0,
-                forecastMonths: 2,
+                forecastMonths: futureMonths.length,
             });
 
             if (forecastData && forecastData.forecast) {

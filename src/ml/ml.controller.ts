@@ -35,24 +35,10 @@ export class MLController {
     @ApiOperation({ summary: 'Получить финансовый прогноз для пользователя' })
     async getFinancialForecast(
         @Param('userId') userId: string,
-        @Body()
-        body: {
-            transactions: Array<{
-                transactionDate: string;
-                category: string;
-                refNo?: string;
-                withdrawal: number;
-                deposit: number;
-                balance: number;
-            }>;
-            currentBalance: number;
-            forecastMonths?: number;
-        },
     ) {
         return this.mlService
             .getFinancialForecast({
                 userId,
-                ...body,
             })
             .catch(err => {
                 console.log(err);

@@ -18,15 +18,6 @@ export interface PredictResponse {
 
 interface ForecastRequest {
     userId: string;
-    transactions: Array<{
-        transactionDate: string;
-        category: string;
-        refNo?: string;
-        withdrawal: number;
-        deposit: number;
-        balance: number;
-    }>;
-    currentBalance: number;
     forecastMonths?: number;
 }
 
