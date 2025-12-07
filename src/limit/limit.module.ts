@@ -5,6 +5,7 @@ import { LimitController } from './limit.controller';
 
 @Module({
     providers: [LimitService, ...limitsProviders],
+    exports: [LimitService],
     controllers: [LimitController],
 })
 export class LimitModule {}

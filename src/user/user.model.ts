@@ -50,7 +50,7 @@ export default class User extends Model {
         type: DataType.FLOAT,
         allowNull: true,
     })
-    transactionLimit?: string;
+    transactionLimit?: number;
 
     @Column({
         type: DataType.STRING,

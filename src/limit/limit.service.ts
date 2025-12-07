@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { RepositoryService } from '../common/repository/repository.service';
 import { ModelType } from '../common/repository/type/model-type';
