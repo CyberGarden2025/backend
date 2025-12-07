@@ -106,10 +106,15 @@ export abstract class RepositoryService<T extends Model> {
         options?: DestroyOptions<Attributes<T>>,
     ): Promise<void> {
         if (typeof modelOrId === 'number' || typeof modelOrId === 'string') {
+            const whereCondition: any = {
+                [this.primaryKey]: modelOrId as any,
+            };
+
             const deletedCount = await this.repository.destroy({
-                [this.primaryKey]: modelOrId,
+                where: whereCondition,
                 ...options,
             });
+
             if (deletedCount === 0) this.throwNotFoundException();
             return;
         }
