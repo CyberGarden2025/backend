@@ -142,8 +142,12 @@ class TransactionPredictor:
                 self.last_confidence = 1.0
 
             prediction = self.model.predict(features)
-            # CatBoost возвращает np.ndarray, берём первый элемент
-            return str(prediction[0])
+            # CatBoost возвращает np.ndarray; приводим к скаляру и строке,
+            # чтобы не получить строку вида "['Food']"
+            value = prediction[0]
+            if isinstance(value, (np.ndarray, list, tuple)):
+                value = value[0]
+            return str(value)
         except Exception as exc:  # noqa: BLE001
             print(f"Prediction failed, falling back to mock: {exc}")
             return self._predict_mock(transaction)
