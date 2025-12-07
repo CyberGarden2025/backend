@@ -17,7 +17,7 @@ export interface PredictResponse {
 }
 
 interface ForecastRequest {
-    userId: number;
+    userId: string;
     forecastMonths?: number;
 }
 

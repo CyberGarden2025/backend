@@ -149,7 +149,7 @@ export class TransactionController {
             }
 
             const forecastData = await this.mlService.getFinancialForecast({
-                userId: 1,
+                userId: '1',
                 forecastMonths: futureMonths.length,
             });
 

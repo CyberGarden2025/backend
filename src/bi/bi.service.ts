@@ -21,6 +21,24 @@ export interface BIQueryResponse {
     };
 }
 
+export interface BISuggestedQuery {
+    label: string;
+    question: string;
+}
+
+export interface BIChatRequest {
+    question?: string;
+    maxRows?: number;
+}
+
+export interface BIChatResponse {
+    answer: string;
+    sql?: string;
+    rows: Array<Record<string, any>>;
+    chart?: BIQueryResponse['chart'];
+    suggested_queries: BISuggestedQuery[];
+}
+
 @Injectable()
 export class BIService {
     private readonly logger = new Logger(BIService.name);
@@ -45,6 +63,33 @@ export class BIService {
             return response.data;
         } catch (error) {
             this.logger.error(`Failed to execute BI query: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async chat(body: BIChatRequest): Promise<BIChatResponse> {
+        try {
+            const response = await firstValueFrom(
+                this.httpService.post<BIChatResponse>(`${this.biServiceUrl}/bi/chat`, {
+                    question: body.question,
+                    max_rows: body.maxRows,
+                }),
+            );
+            return response.data;
+        } catch (error) {
+            this.logger.error(`Failed to execute BI chat: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async chatPresets(): Promise<BISuggestedQuery[]> {
+        try {
+            const response = await firstValueFrom(
+                this.httpService.get<BISuggestedQuery[]>(`${this.biServiceUrl}/bi/chat/presets`),
+            );
+            return response.data;
+        } catch (error) {
+            this.logger.error(`Failed to load BI chat presets: ${error.message}`);
             throw error;
         }
     }
