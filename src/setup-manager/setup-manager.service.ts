@@ -33,6 +33,7 @@ export class SetupManagerService implements OnModuleInit {
             email: 'admin@mail.ru',
             username: 'testUser',
             password: 'aeboba',
+            tranacrionLimit: 80,
         };
         const user = await this.userService.findById(1).catch(() => null);
 

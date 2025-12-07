@@ -20,44 +20,44 @@ export default class Limit extends Model {
         type: DataType.STRING(255),
         allowNull: false,
     })
-    name: string;
+    declare name: string;
 
     @Column({
         type: DataType.STRING,
         allowNull: false,
     })
-    icon: string;
+    declare icon: string;
 
     @Column({
         type: DataType.TEXT,
         allowNull: true,
     })
-    description: string;
+    declare description: string;
 
     @Column({
         type: DataType.FLOAT,
         allowNull: false,
     })
-    limit: number;
+    declare limit: number;
 
     @Column({
         type: DataType.FLOAT,
         allowNull: true,
     })
-    spent: number;
+    declare spent: number;
 
     @Column({
         type: DataType.STRING(50),
         allowNull: false,
     })
-    period: string;
+    declare period: string;
 
     @Column({
         type: DataType.JSON,
         allowNull: false,
         defaultValue: [],
     })
-    categories: string[];
+    declare categories: string[];
 
     @ForeignKey(() => User)
     @Column({
@@ -65,7 +65,7 @@ export default class Limit extends Model {
         allowNull: false,
         field: 'userId',
     })
-    userId: number;
+    declare userId: number;
 
     @BelongsTo(() => User)
     user!: User;

@@ -5,7 +5,7 @@ import { ModelType } from '../common/repository/type/model-type';
 import Limit from './limit.model';
 
 @Injectable()
-export class LimitService extends RepositoryService<Limit> implements OnModuleInit {
+export class LimitService extends RepositoryService<Limit> {
     private readonly logger = new Logger(LimitService.name);
 
     constructor(
@@ -13,21 +13,5 @@ export class LimitService extends RepositoryService<Limit> implements OnModuleIn
         protected repository: ModelType<Limit>,
     ) {
         super(repository);
-    }
-
-    async onModuleInit() {
-        const limit = await super.findAll();
-
-        if (!limit.length) {
-            await super.create({
-                name: 'Лимит на продукты',
-                icon: 'shopping',
-                description: 'Ежемесячный лимит на продукты питания',
-                limit: 10000,
-                period: 'monthly',
-                categories: ['Food', 'Shopping'],
-                userId: 1,
-            });
-        }
     }
 }

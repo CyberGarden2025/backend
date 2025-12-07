@@ -12,6 +12,7 @@ import { MLService } from '../ml/ml.service';
 import { UserService } from '../user/user.service';
 import { v4 } from 'uuid';
 import { LimitService } from 'src/limit/limit.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class TransactionService extends RepositoryService<Transaction> {
@@ -23,6 +24,7 @@ export class TransactionService extends RepositoryService<Transaction> {
         private readonly mlService: MLService,
         private readonly userService: UserService,
         private readonly limitService: LimitService,
+        private readonly notificationService: NotificationService,
     ) {
         super(repository);
     }
@@ -107,6 +109,7 @@ export class TransactionService extends RepositoryService<Transaction> {
                 await this.limitService.update(limit.id, {
                     spent: newSpent,
                 });
+                const spentPercentage = (limit.spent / limit.limit) * 100;
             }),
         );
 
