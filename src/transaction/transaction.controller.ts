@@ -8,6 +8,8 @@ import {
     Body,
     ParseIntPipe,
     Req,
+    UsePipes,
+    ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
@@ -23,6 +25,7 @@ import { MonthSummaryDto } from './dto/month-summary.dto';
 import { MLService } from '../ml/ml.service';
 import { TransactionCreateDto } from './dto/transaction-create.dto';
 import { Request } from 'express';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @ApiTags('transactions')
 @Controller('transactions')
@@ -148,8 +151,7 @@ export class TransactionController {
                 };
             }
 
-            const forecastData = await this.mlService.getFinancialForecast({
-                userId: '1',
+            const forecastData = await this.mlService.getFinancialForecast(1, {
                 forecastMonths: futureMonths.length,
             });
 
@@ -234,16 +236,6 @@ export class TransactionController {
         };
     }
 
-    @Patch('/:userId/:transactionId/category')
-    async updateCategory(
-        @Param('id', ParseIntPipe) userId: number,
-        @Param('transactionId', ParseIntPipe) transactionId: number,
-        @Body('category') category: string,
-    ): Promise<{ success: boolean }> {
-        await this.service.updateCategory(userId, transactionId, category);
-        return { success: true };
-    }
-
     @Get(':id')
     @ApiOkResponse({
         description: 'Возвращает транзакцию по id',
@@ -255,5 +247,13 @@ export class TransactionController {
             ...transaction,
             sum: transaction.deposit - transaction.withdrawal,
         };
+    }
+
+    @Patch(':id')
+    @UsePipes(new ValidationPipe({ whitelist: true })) // Только whitelist без forbidNonWhitelisted
+    async updateCategory(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateCategoryDto) {
+        await this.service.update(id, {
+            category: body.category,
+        });
     }
 }

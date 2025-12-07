@@ -68,7 +68,10 @@ export class MLService {
                 forecastMonths: body?.forecastMonths,
             };
             const response = await firstValueFrom(
-                this.httpService.post(`${this.mlServiceUrl}/forecast`, payload),
+                this.httpService.post(`${this.mlServiceUrl}/forecast`, {
+                    userId,
+                    forecastMonths: body?.forecastMonths,
+                }),
             );
             return response.data;
         } catch (error) {
