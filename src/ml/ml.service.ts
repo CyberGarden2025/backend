@@ -69,12 +69,13 @@ export class MLService {
             };
             const response = await firstValueFrom(
                 this.httpService.post(`${this.mlServiceUrl}/forecast`, {
-                    userId,
+                    userId: String(userId),
                     forecastMonths: body?.forecastMonths,
                 }),
             );
             return response.data;
         } catch (error) {
+            console.log(userId, body?.forecastMonths);
             this.logger.error(`Failed to get financial forecast: ${error.message}`);
             throw error;
         }
