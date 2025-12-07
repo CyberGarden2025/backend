@@ -22,7 +22,6 @@ services:
     restart: unless-stopped
     networks:
         - backend
-        - keycloak
   ml-service:
     build:
         context: ./ml-service
@@ -70,9 +69,6 @@ services:
 networks:
     backend:
         driver: bridge
-    keycloak:
-        external: true
-        name: keycloack_keycloak-network
 
 # VOLUMES
 volumes:

@@ -30,31 +30,11 @@ export class MLController {
         return this.mlService.predictCategoriesBatch(body);
     }
 
-    @Post('forecast/:userId')
+    @Post('forecast')
     @ApiOperation({ summary: 'Получить финансовый прогноз для пользователя' })
-    async getFinancialForecast(
-        @Param('userId', ParseIntPipe) userId: number,
-        @Body()
-        body: {
-            transactions: Array<{
-                transactionDate: string;
-                category: string;
-                refNo?: string;
-                withdrawal: number;
-                deposit: number;
-                balance: number;
-            }>;
-            currentBalance: number;
-            forecastMonths?: number;
-        },
-    ) {
-        return this.mlService
-            .getFinancialForecast({
-                userId,
-                ...body,
-            })
-            .catch(err => {
-                console.log(err);
-            });
+    async getFinancialForecast() {
+        return this.mlService.getFinancialForecast(1).catch(err => {
+            console.log(err);
+        });
     }
 }

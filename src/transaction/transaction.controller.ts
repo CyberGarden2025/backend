@@ -148,22 +148,7 @@ export class TransactionController {
                 };
             }
 
-            const forecastData = await this.mlService.getFinancialForecast({
-                userId: 1,
-                transactions: allTransactions.map(t => ({
-                    transactionDate:
-                        t.transactionDate instanceof Date
-                            ? t.transactionDate.toISOString().split('T')[0]
-                            : t.transactionDate.toString(),
-                    category: t.category || '',
-                    refNo: t.refNo || undefined,
-                    withdrawal: t.withdrawal || 0,
-                    deposit: t.deposit || 0,
-                    balance: t.balance || 0,
-                })),
-                currentBalance: allTransactions[0]?.balance || 0,
-                forecastMonths: 2,
-            });
+            const forecastData = await this.mlService.getFinancialForecast(1);
 
             if (forecastData && forecastData.forecast) {
                 forecastData.forecast.forEach((prediction: any, index: number) => {
