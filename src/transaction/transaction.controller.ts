@@ -45,19 +45,6 @@ export class TransactionController {
         });
     }
 
-    @Get(':id')
-    @ApiOkResponse({
-        description: 'Возвращает транзакцию по id',
-        type: TransactionResponse,
-    })
-    async findOne(@Param('id') id: number): Promise<TransactionResponse> {
-        const transaction = await this.service.findById(id);
-        return {
-            ...transaction,
-            sum: transaction.deposit - transaction.withdrawal,
-        };
-    }
-
     @Post()
     @ApiOkResponse({
         description: 'Транзакция успешно создана',
@@ -86,11 +73,8 @@ export class TransactionController {
         description: 'Доходы и расходы за указанный период',
         type: TotalTransactionResponse,
     })
-    async getTotal(
-        @Param('id', ParseIntPipe) userId: number,
-        @Query() periodDto: TransactionPeriodDto,
-    ): Promise<TotalTransactionResponse> {
-        return this.service.getTotalTransactions(userId, periodDto.start, periodDto.end);
+    async getTotal(@Query() periodDto: TransactionPeriodDto): Promise<TotalTransactionResponse> {
+        return this.service.getTotalTransactions(1, periodDto.start, periodDto.end);
     }
 
     // Данные для графика расходов
@@ -99,10 +83,7 @@ export class TransactionController {
         description: 'Расходы за указанный месяц и прогноз на 7 месяцев',
         type: ExpensesChartResponse,
     })
-    async getExpensesChart(
-        @Param('id', ParseIntPipe) userId: number,
-        @Body() dto: ExpensesChartDto,
-    ): Promise<ExpensesChartResponse> {
+    async getExpensesChart(@Body() dto: ExpensesChartDto): Promise<ExpensesChartResponse> {
         const [day, month, year] = dto.startDate.split('/').map(Number);
         const baseDate = new Date(year, month - 1, day);
         const currentYear = baseDate.getFullYear();
@@ -126,7 +107,7 @@ export class TransactionController {
         );
 
         const monthlyExpenses = await this.service.getExpensesByMonth(
-            userId,
+            1,
             queryStartDate,
             queryEndDate,
         );
@@ -154,7 +135,7 @@ export class TransactionController {
         const futureMonths = monthData.filter(m => m.isPrediction);
         if (futureMonths.length > 0) {
             const allTransactions = await this.service.findAll({
-                where: { userId },
+                where: { userId: 1 },
                 order: [['transactionDate', 'DESC']],
                 limit: 100,
             });
@@ -168,7 +149,7 @@ export class TransactionController {
             }
 
             const forecastData = await this.mlService.getFinancialForecast({
-                userId,
+                userId: 1,
                 transactions: allTransactions.map(t => ({
                     transactionDate:
                         t.transactionDate instanceof Date
@@ -206,18 +187,11 @@ export class TransactionController {
         description: 'Расходы по категориям за указанный месяц',
         type: CategoriesMonthResponse,
     })
-    async getCategoriesByMonth(
-        @Param('id', ParseIntPipe) userId: number,
-        @Body() dto: CategoriesMonthDto,
-    ): Promise<CategoriesMonthResponse> {
+    async getCategoriesByMonth(@Body() dto: CategoriesMonthDto): Promise<CategoriesMonthResponse> {
         const [day, month, year] = dto.monthDate.split('/').map(Number);
         const monthDate = new Date(year, month - 1, day);
 
-        const categoryExpenses = await this.service.getExpensesByCategoryForMonth(
-            userId,
-            year,
-            month,
-        );
+        const categoryExpenses = await this.service.getExpensesByCategoryForMonth(1, year, month);
 
         const totalExpenses = Array.from(categoryExpenses.values()).reduce(
             (sum, amount) => sum + amount,
@@ -250,14 +224,11 @@ export class TransactionController {
         description: 'Поступления и расходы за указанный месяц',
         type: MonthSummaryResponse,
     })
-    async getMonthSummary(
-        @Param('id', ParseIntPipe) userId: number,
-        @Body() dto: MonthSummaryDto,
-    ): Promise<MonthSummaryResponse> {
+    async getMonthSummary(@Body() dto: MonthSummaryDto): Promise<MonthSummaryResponse> {
         const [day, month, year] = dto.monthDate.split('/').map(Number);
         const monthDate = new Date(year, month - 1, day);
 
-        const { income, expenses } = await this.service.getMonthSummary(userId, year, month);
+        const { income, expenses } = await this.service.getMonthSummary(1, year, month);
 
         const balance = income - expenses;
         const expensesPercentage = income > 0 ? Math.round((expenses / income) * 100 * 10) / 10 : 0;
@@ -283,5 +254,18 @@ export class TransactionController {
     ): Promise<{ success: boolean }> {
         await this.service.updateCategory(userId, transactionId, category);
         return { success: true };
+    }
+
+    @Get(':id')
+    @ApiOkResponse({
+        description: 'Возвращает транзакцию по id',
+        type: TransactionResponse,
+    })
+    async findOne(@Param('id') id: number): Promise<TransactionResponse> {
+        const transaction = await this.service.findById(id);
+        return {
+            ...transaction,
+            sum: transaction.deposit - transaction.withdrawal,
+        };
     }
 }
