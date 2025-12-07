@@ -259,7 +259,7 @@ export class TransactionController {
     }
 
     @Delete(':id')
-    async delete(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateCategoryDto) {
+    async delete(@Param('id', ParseIntPipe) id: number) {
         await this.service.delete(id);
     }
 }
