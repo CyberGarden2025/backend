@@ -43,7 +43,7 @@ export class AIChatController {
         type: EnqueueMessageResponse,
     })
     @ApiBadRequestResponse({ description: 'Некорректные параметры запроса' })
-    enqueueMessage(@Body() body: EnqueueMessageDto): EnqueueMessageResponse {
+    enqueueMessage(@Body() body: EnqueueMessageDto): Promise<EnqueueMessageResponse> {
         return this.aiChatService.enqueueMessage(body);
     }
 

@@ -2,9 +2,11 @@ import {
     BadRequestException,
     ForbiddenException,
     Injectable,
+    Logger,
     NotFoundException,
 } from '@nestjs/common';
 import { randomBytes, randomUUID } from 'crypto';
+import axios, { AxiosInstance } from 'axios';
 import { EnqueueMessageDto } from './dto/enqueue-message.dto';
 import {
     MessageFilterDto,
@@ -30,15 +32,55 @@ interface ChatMessage {
     updated_at: Date;
 }
 
+interface LdrStartResponse {
+    status?: string;
+    research_id?: string;
+    queue_position?: number;
+    message?: string;
+}
+
+interface LdrStatusResponse {
+    status?: string;
+    progress?: number;
+    metadata?: Record<string, any>;
+    error?: string;
+}
+
 @Injectable()
 export class AIChatService {
+    private readonly logger = new Logger(AIChatService.name);
     private messages: ChatMessage[] = [];
+    private readonly ldrClient: AxiosInstance;
+    private readonly ldrBaseUrl: string;
+    private readonly ldrUsername: string | undefined;
+    private readonly ldrPassword: string | undefined;
+    private readonly ldrModel: string;
+    private readonly ldrPollTimeoutMs: number;
+    private readonly ldrPollIntervalMs: number;
 
     constructor() {
+        this.ldrBaseUrl = process.env.LDR_BASE_URL ?? 'http://localhost:5731';
+        this.ldrUsername = process.env.LDR_USERNAME;
+        this.ldrPassword = process.env.LDR_PASSWORD;
+        this.ldrModel = process.env.LDR_MODEL ?? 'gpt-oss:20b';
+        this.ldrPollIntervalMs = Math.max(
+            1000,
+            Number(process.env.LDR_POLL_INTERVAL_MS ?? 5_000),
+        );
+        this.ldrPollTimeoutMs = Math.max(
+            60_000,
+            Number(process.env.LDR_POLL_TIMEOUT_MS ?? 3 * 60 * 60 * 1000), // default 3 hours
+        );
+        this.ldrClient = axios.create({
+            baseURL: this.ldrBaseUrl,
+            timeout: 30_000,
+            validateStatus: () => true,
+        });
+
         this.seedMessages();
     }
 
-    enqueueMessage(dto: EnqueueMessageDto): EnqueueMessageResponse {
+    async enqueueMessage(dto: EnqueueMessageDto): Promise<EnqueueMessageResponse> {
         const content = dto.content.trim();
         if (!content) {
             throw new BadRequestException('content should not be empty');
@@ -69,6 +111,12 @@ export class AIChatService {
             is_complete: false,
             created_at: now,
             updated_at: now,
+        });
+
+        // Kick off LDR request asynchronously
+        this.fetchFromLdr(aiMessageId, content).catch(err => {
+            this.logger.error(`LDR request failed: ${err instanceof Error ? err.message : err}`);
+            this.updateMessage(aiMessageId, `LDR error: ${err instanceof Error ? err.message : 'unknown'}`, true);
         });
 
         return {
@@ -223,6 +271,172 @@ export class AIChatService {
 
     private generateMessageId(): string {
         return randomBytes(12).toString('hex');
+    }
+
+    private updateMessage(messageId: string, content: string, isComplete: boolean): void {
+        const message = this.messages.find(m => m.id === messageId);
+        if (!message) {
+            return;
+        }
+        message.content = content;
+        message.is_complete = isComplete;
+        message.updated_at = new Date();
+    }
+
+    private async fetchFromLdr(aiMessageId: string, query: string): Promise<void> {
+        if (!this.ldrUsername || !this.ldrPassword) {
+            this.updateMessage(
+                aiMessageId,
+                'LDR credentials are not configured (set LDR_USERNAME and LDR_PASSWORD).',
+                true,
+            );
+            return;
+        }
+
+        const cookieJar = new Map<string, string>();
+
+        const addCookies = (setCookie?: string[] | string): void => {
+            if (!setCookie) return;
+            const entries = Array.isArray(setCookie) ? setCookie : [setCookie];
+            for (const c of entries) {
+                const trimmed = c.split(';')[0];
+                if (!trimmed) continue;
+                const [name, value] = trimmed.split('=');
+                if (!name) continue;
+                cookieJar.set(name, value);
+            }
+        };
+
+        const cookieHeader = (): string | undefined => {
+            if (!cookieJar.size) return undefined;
+            return Array.from(cookieJar.entries())
+                .map(([k, v]) => `${k}=${v}`)
+                .join('; ');
+        };
+
+        const extractCsrfFromHtml = (html: string): string | null => {
+            const match = html.match(/name=["']csrf_token["']\s+value=["']([^"']+)/i);
+            return match ? match[1] : null;
+        };
+
+        const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // 1. Get login page to obtain CSRF and initial cookies
+        const loginPage = await this.ldrClient.get('/auth/login');
+        addCookies(loginPage.headers['set-cookie'] as any);
+
+        const loginCsrf = typeof loginPage.data === 'string' ? extractCsrfFromHtml(loginPage.data) : null;
+        if (!loginCsrf) {
+            throw new Error('Unable to obtain CSRF token from LDR login page');
+        }
+
+        // 2. Login
+        const form = new URLSearchParams();
+        form.append('username', this.ldrUsername);
+        form.append('password', this.ldrPassword);
+        form.append('csrf_token', loginCsrf);
+
+        const loginResp = await this.ldrClient.post('/auth/login', form.toString(), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                Cookie: cookieHeader(),
+            },
+            maxRedirects: 0,
+        });
+        addCookies(loginResp.headers['set-cookie'] as any);
+        if (![200, 302].includes(loginResp.status)) {
+            throw new Error(`LDR login failed with status ${loginResp.status}`);
+        }
+
+        // 3. Get CSRF token for API requests
+        const csrfResp = await this.ldrClient.get('/auth/csrf-token', {
+            headers: { Cookie: cookieHeader() },
+        });
+        addCookies(csrfResp.headers['set-cookie'] as any);
+        const apiCsrf = csrfResp.data?.csrf_token;
+        if (!apiCsrf) {
+            throw new Error('Unable to obtain API CSRF token from LDR');
+        }
+
+        const headers = {
+            Cookie: cookieHeader(),
+            'X-CSRF-Token': apiCsrf,
+        };
+
+        // 4. Start research
+        const startResp = await this.ldrClient.post<LdrStartResponse>(
+            '/api/start_research',
+            {
+                query,
+                model: this.ldrModel,
+                search_engines: ['searxng'],
+                iterations: 1,
+            },
+            { headers },
+        );
+
+        if (startResp.status === 401) {
+            this.logger.warn(
+                `LDR start_research returned 401. Body: ${JSON.stringify(startResp.data).slice(0, 300)}`,
+            );
+            throw new Error('LDR returned 401 on start_research (check LDR_USERNAME/LDR_PASSWORD)');
+        }
+
+        const researchId = startResp.data?.research_id;
+        if (!researchId) {
+            throw new Error(`LDR start_research failed: ${startResp.status} ${startResp.data?.message ?? ''}`);
+        }
+
+        // 5. Poll status
+        let completed = false;
+        let finalStatus: string | undefined;
+        let lastError: string | undefined;
+
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < this.ldrPollTimeoutMs) {
+            await sleep(this.ldrPollIntervalMs);
+            const statusResp = await this.ldrClient.get<LdrStatusResponse>(
+                `/api/research/${researchId}/status`,
+                { headers },
+            );
+
+            finalStatus = statusResp.data?.status;
+            if (finalStatus === 'completed') {
+                completed = true;
+                break;
+            }
+            if (
+                finalStatus === 'failed' ||
+                finalStatus === 'error' ||
+                finalStatus === 'suspended'
+            ) {
+                lastError =
+                    statusResp.data?.metadata?.error ||
+                    statusResp.data?.error ||
+                    'LDR research failed';
+                break;
+            }
+        }
+
+        if (!completed) {
+            const waitedMinutes = Math.round((Date.now() - startedAt) / 60000);
+            throw new Error(
+                lastError ||
+                    `LDR research not completed after ${waitedMinutes} minutes (status: ${finalStatus ?? 'unknown'})`,
+            );
+        }
+
+        // 6. Fetch report
+        const reportResp = await this.ldrClient.get<{ content?: string }>(`/api/report/${researchId}`, {
+            headers,
+        });
+
+        const content = reportResp.data?.content;
+        if (!content) {
+            throw new Error('LDR report is empty');
+        }
+
+        this.updateMessage(aiMessageId, content, true);
     }
 
     private seedMessages(): void {
