@@ -10,6 +10,7 @@ import {
     Req,
     UsePipes,
     ValidationPipe,
+    Delete,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
@@ -255,5 +256,10 @@ export class TransactionController {
         await this.service.update(id, {
             category: body.category,
         });
+    }
+
+    @Delete(':id')
+    async delete(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateCategoryDto) {
+        await this.service.delete(id);
     }
 }
