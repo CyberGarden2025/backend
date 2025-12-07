@@ -6,6 +6,8 @@ import {
     maskToken,
     readNotificationLogs,
 } from 'src/common/logger/notification-audit';
+import { CreateNotificationDto } from './dto/create-notification.dto';
+import { CreateFcmTokenDto } from './dto/create-fcm-token.dto';
 
 @Controller('notifications')
 export class NotificationController {
@@ -17,14 +19,9 @@ export class NotificationController {
     @Post('send')
     async sendNotification(
         @Body()
-        body: {
-            userId: number;
-            title: string;
-            body: string;
-            data?: Record<string, string>;
-        },
+        body: CreateNotificationDto,
     ) {
-        const userToken = await this.getUserToken(body.userId);
+        const userToken = await this.getUserToken(1);
 
         try {
             const response = await this.notificationService.sendNotification(
@@ -39,7 +36,7 @@ export class NotificationController {
             await appendNotificationLog({
                 timestamp: new Date().toISOString(),
                 type: 'send',
-                userId: body.userId,
+                userId: 1,
                 tokenMasked: maskToken(userToken),
                 status: 'success',
                 messageId: response.responses?.[0]?.messageId,
@@ -53,13 +50,40 @@ export class NotificationController {
             await appendNotificationLog({
                 timestamp: new Date().toISOString(),
                 type: 'send',
-                userId: body.userId,
+                userId: 1,
                 tokenMasked: maskToken(userToken),
                 status: 'error',
                 error: error?.message || 'Send failed',
                 meta: {
                     title: body.title,
                 },
+            });
+            throw error;
+        }
+    }
+
+    @Patch('token')
+    async updateFcmToken(@Body() body: CreateFcmTokenDto) {
+        try {
+            const updated = await this.userService.update(1, { fcmToken: body.fcmToken });
+
+            await appendNotificationLog({
+                timestamp: new Date().toISOString(),
+                type: 'token_update',
+                userId: 1,
+                tokenMasked: maskToken(body.fcmToken),
+                status: 'success',
+            });
+
+            return updated;
+        } catch (error: any) {
+            await appendNotificationLog({
+                timestamp: new Date().toISOString(),
+                type: 'token_update',
+                userId: 1,
+                tokenMasked: maskToken(body.fcmToken),
+                status: 'error',
+                error: error?.message || 'Token update failed',
             });
             throw error;
         }
@@ -83,36 +107,6 @@ export class NotificationController {
             },
             body.data,
         );
-    }
-
-    @Patch('token')
-    async updateFcmToken(
-        @Body('userId', ParseIntPipe) userId: number,
-        @Body('fcmToken') fcmToken: string,
-    ) {
-        try {
-            const updated = await this.userService.update(userId, { fcmToken });
-
-            await appendNotificationLog({
-                timestamp: new Date().toISOString(),
-                type: 'token_update',
-                userId,
-                tokenMasked: maskToken(fcmToken),
-                status: 'success',
-            });
-
-            return updated;
-        } catch (error: any) {
-            await appendNotificationLog({
-                timestamp: new Date().toISOString(),
-                type: 'token_update',
-                userId,
-                tokenMasked: maskToken(fcmToken),
-                status: 'error',
-                error: error?.message || 'Token update failed',
-            });
-            throw error;
-        }
     }
 
     @Get('debug/logs')

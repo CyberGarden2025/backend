@@ -47,9 +47,6 @@ export class SetupManagerService implements OnModuleInit {
                 return;
             }
             await this.createCsvTransactions(created.id);
-        } else {
-            this.logger.log(`User is found. Skipping create transactions (id=${user.id})`);
-            await this.createCsvTransactions(user.id);
         }
     }
 
