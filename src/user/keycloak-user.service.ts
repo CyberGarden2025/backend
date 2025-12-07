@@ -33,8 +33,11 @@ export class KeycloakUserService {
     private adminTokenCache: { token: string; exp: number } | null = null;
 
     constructor(private readonly configService: ConfigService) {
+        const internalUrl =
+            this.configService.get<string>('KEYCLOAK_INTERNAL_URL') ||
+            this.configService.get<string>('KEYCLOAK_AUTH_SERVER_URL');
         this.http = axios.create({
-            baseURL: this.configService.get<string>('KEYCLOAK_AUTH_SERVER_URL'),
+            baseURL: internalUrl,
             timeout: 10000,
         });
     }
@@ -47,7 +50,10 @@ export class KeycloakUserService {
 
         const username = this.configService.get<string>('KEYCLOAK_ADMIN_USER') || 'admin';
         const password = this.configService.get<string>('KEYCLOAK_ADMIN_PASSWORD') || 'admin';
-        const tokenUrl = `${this.configService.get<string>('KEYCLOAK_AUTH_SERVER_URL')}/realms/master/protocol/openid-connect/token`;
+        const tokenBase =
+            this.configService.get<string>('KEYCLOAK_INTERNAL_URL') ||
+            this.configService.get<string>('KEYCLOAK_AUTH_SERVER_URL');
+        const tokenUrl = `${tokenBase}/realms/master/protocol/openid-connect/token`;
 
         try {
             const params = new URLSearchParams();

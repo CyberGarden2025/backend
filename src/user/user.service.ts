@@ -7,7 +7,7 @@ export class UserService {
 
     constructor(private readonly kcUserService: KeycloakUserService) {}
 
-    async findById(id: number): Promise<KeycloakUserProfile> {
+    async findById(id: string): Promise<KeycloakUserProfile> {
         try {
             return await this.kcUserService.findById(String(id));
         } catch (error) {

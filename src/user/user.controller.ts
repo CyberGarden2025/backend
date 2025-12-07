@@ -22,7 +22,7 @@ export class UserController {
         description: 'Профиль пользователя для фронта / Firebase',
         type: FirebaseUserDto,
     })
-    async getProfile(@Param('id', ParseIntPipe) id: number): Promise<FirebaseUserDto> {
+    async getProfile(@Param('id') id: string): Promise<FirebaseUserDto> {
         const user = await this.userService.findById(id);
         return this.toFirebaseDto(user as any);
     }

@@ -99,7 +99,7 @@ export class NotificationService {
         const yearNum = checkDate.getFullYear();
         const monthNum = checkDate.getMonth() + 1;
 
-        const user = await this.userService.findById(+userId);
+        const user = await this.userService.findById(userId);
 
         const defaultNotificationSettings = {
             categoryLimitWarning: true,

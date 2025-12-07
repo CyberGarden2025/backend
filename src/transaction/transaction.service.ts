@@ -36,7 +36,7 @@ export class TransactionService extends RepositoryService<Transaction> {
         return date.toISOString().split('T')[0];
     }
 
-    async createTransaction(userId: number, payload: TransactionCreateDto): Promise<Transaction> {
+    async createTransaction(userId: string, payload: TransactionCreateDto): Promise<Transaction> {
         // Получаем пользователя (findById бросает NotFoundException если не найден)
         const user = await this.userService.findById(userId);
 
@@ -408,7 +408,7 @@ export class TransactionService extends RepositoryService<Transaction> {
         return months[monthIndex];
     }
 
-    async updateCategory(userId: number, transactionId: number, category: string): Promise<void> {
+    async updateCategory(userId: string, transactionId: number, category: string): Promise<void> {
         const [affectedCount] = await this.repository.update(
             { category },
             {

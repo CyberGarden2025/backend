@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Patch, Get, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, Get, Query } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { UserService } from 'src/user/user.service';
 import {
@@ -18,7 +18,7 @@ export class NotificationController {
     async sendNotification(
         @Body()
         body: {
-            userId: number;
+            userId: string;
             title: string;
             body: string;
             data?: Record<string, string>;
@@ -145,7 +145,7 @@ export class NotificationController {
 
     @Post('check/:userId')
     async checkNotifications(
-        @Param('userId', ParseIntPipe) userId: number,
+        @Param('userId') userId: string,
         @Body()
         body: {
             monthDate: string;
@@ -154,7 +154,7 @@ export class NotificationController {
         return this.notificationService.checkUserNotifications(String(userId), body.monthDate);
     }
 
-    private async getUserToken(userId: number): Promise<string> {
+    private async getUserToken(userId: string): Promise<string> {
         const user = await this.userService.findById(userId);
         if (!user.fcmToken) {
             throw new Error('FCM токен не найден у пользователя');

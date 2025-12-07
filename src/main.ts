@@ -21,10 +21,11 @@ async function bootstrap() {
         return `http://${trimmed}`;
     };
 
-    const allowedOrigins = frontendHost
-        ?.split(',')
-        .map(normalizeOrigin)
-        .filter((origin): origin is string => Boolean(origin)) || ['http://localhost:4200'];
+    const allowedOrigins =
+        frontendHost
+            ?.split(',')
+            .map(normalizeOrigin)
+            .filter((origin): origin is string => Boolean(origin)) || ['http://localhost:4200'];
     app.setGlobalPrefix('api');
 
     const config = new DocumentBuilder()
@@ -58,7 +59,7 @@ async function bootstrap() {
     });
 
     app.enableCors({
-        origin: frontendHost || 'http://localhost:4200',
+        origin: allowedOrigins,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],

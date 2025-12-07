@@ -5,6 +5,11 @@ services:
         dockerfile: ./docker/Dockerfile
     container_name: backend-service
     env_file: .env
+    environment:
+        KEYCLOAK_AUTH_SERVER_URL: http://localhost:8080
+        KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+        KEYCLOAK_TOKEN_VALIDATION: offline
+        KEYCLOAK_REALM_PUBLIC_KEY: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3F8yzrtmnSUiSpDkQg++7QD7AgcRani686KqqYdDhzzmMq6AnMeuT/ha6LN5iUvVi8lAjg9QrMlQbzyv6f6KYg2WBmRmU/+A5akp4YiArpMPZwIzjgo5Xdu1j1N49jQhjn97i/+gQp1L6k7vM2lVykG4vy6HASvy1q0CYf+jdpnK+UVrOU4zmBSqz85PId5edFoxrZKHScqGheBZQrREIpYt0sxHa184F5l8WZuGtVerROlcNHhaRt2tkAMJPm5/gyrdOtKC/2zomS1OTyebjpVkeM3InCNdxSFINnzlVGu/PZb/T7gQjApY3E1eiMTOIG8zdsJUmimEdqUpbI9iLwIDAQAB
     ports:
       - 3000:3000
     depends_on:
@@ -67,7 +72,7 @@ networks:
         driver: bridge
     keycloak:
         external: true
-        name: key-cloack_keycloak-network
+        name: keycloack_keycloak-network
 
 # VOLUMES
 volumes:
