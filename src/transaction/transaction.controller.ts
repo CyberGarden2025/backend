@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, ParseIntPipe } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Patch,
+    Param,
+    Query,
+    Body,
+    ParseIntPipe,
+    Req,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
 import { TransactionResponse, TransactionsResponse } from './response/transaction.response';
@@ -12,9 +22,9 @@ import { MonthSummaryResponse } from './response/month-summary.response';
 import { MonthSummaryDto } from './dto/month-summary.dto';
 import { MLService } from '../ml/ml.service';
 import { TransactionCreateDto } from './dto/transaction-create.dto';
+import { Request } from 'express';
 
 @ApiTags('transactions')
-@ApiBearerAuth('keycloak')
 @Controller('transactions')
 export class TransactionController {
     constructor(
@@ -35,39 +45,16 @@ export class TransactionController {
         });
     }
 
-    @Get(':id')
-    @ApiOkResponse({
-        description: 'Возвращает транзакцию по id',
-        type: TransactionResponse,
-    })
-    async findOne(@Param('id') id: number): Promise<TransactionResponse> {
-        const transaction = await this.service.findById(id);
-        return {
-            ...transaction,
-            sum: transaction.deposit - transaction.withdrawal,
-        };
-    }
-
-    @Post('/:userId')
-    @ApiParam({
-        name: 'userId',
-        description: 'ID пользователя',
-        type: Number,
-    })
+    @Post()
     @ApiOkResponse({
         description: 'Транзакция успешно создана',
     })
-    async create(@Param('userId', ParseIntPipe) userId: number, @Body() dto: TransactionCreateDto) {
-        return this.service.createTransaction(userId, dto);
+    async create(@Body() dto: TransactionCreateDto) {
+        return this.service.createTransaction(1, dto);
     }
 
-    @Get('/:userId/total')
-    @ApiParam({
-        name: 'userId',
-        description: 'ID пользователя',
-        type: String,
-        example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b',
-    })
+    // Доходы/расходы за период
+    @Get('total')
     @ApiQuery({
         name: 'start',
         description: 'Начальная дата периода (YYYY-MM-DD)',
@@ -86,28 +73,17 @@ export class TransactionController {
         description: 'Доходы и расходы за указанный период',
         type: TotalTransactionResponse,
     })
-    async getTotal(
-        @Param('userId') id: string,
-        @Query() periodDto: TransactionPeriodDto,
-    ): Promise<TotalTransactionResponse> {
-        return this.service.getTotalTransactions(id, periodDto.start, periodDto.end);
+    async getTotal(@Query() periodDto: TransactionPeriodDto): Promise<TotalTransactionResponse> {
+        return this.service.getTotalTransactions(1, periodDto.start, periodDto.end);
     }
 
-    @Post('/:userId/expenses-chart')
-    @ApiParam({
-        name: 'userId',
-        description: 'ID пользователя',
-        type: String,
-        example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b',
-    })
+    // Данные для графика расходов
+    @Post('expenses-chart')
     @ApiOkResponse({
         description: 'Расходы за указанный месяц и прогноз на 7 месяцев',
         type: ExpensesChartResponse,
     })
-    async getExpensesChart(
-        @Param('userId') userId: string,
-        @Body() dto: ExpensesChartDto,
-    ): Promise<ExpensesChartResponse> {
+    async getExpensesChart(@Body() dto: ExpensesChartDto): Promise<ExpensesChartResponse> {
         const [day, month, year] = dto.startDate.split('/').map(Number);
         const baseDate = new Date(year, month - 1, day);
         const currentYear = baseDate.getFullYear();
@@ -131,7 +107,7 @@ export class TransactionController {
         );
 
         const monthlyExpenses = await this.service.getExpensesByMonth(
-            userId,
+            1,
             queryStartDate,
             queryEndDate,
         );
@@ -158,6 +134,21 @@ export class TransactionController {
 
         const futureMonths = monthData.filter(m => m.isPrediction);
         if (futureMonths.length > 0) {
+            const allTransactions = await this.service.findAll({
+                where: { userId: 1 },
+                order: [['transactionDate', 'DESC']],
+                limit: 100,
+            });
+
+            // If нет данных — просто возвращаем рассчитанные месяцы без прогноза
+            if (!allTransactions.length) {
+                return {
+                    currentMonthExpenses: Math.round(currentMonthExpenses * 100) / 100,
+                    months: monthData,
+                };
+            }
+
+            const forecastData = await this.mlService.getFinancialForecast(1);
             const forecastData = await this.mlService.getFinancialForecast({
                 userId,
                 forecastMonths: futureMonths.length,
@@ -179,28 +170,17 @@ export class TransactionController {
         };
     }
 
-    @Post('/:userId/categories-month')
-    @ApiParam({
-        name: 'userId',
-        description: 'ID пользователя',
-        type: Number,
-    })
+    // Расходы по категориям за месяц
+    @Post('categories-month')
     @ApiOkResponse({
         description: 'Расходы по категориям за указанный месяц',
         type: CategoriesMonthResponse,
     })
-    async getCategoriesByMonth(
-        @Param('userId') userId: string,
-        @Body() dto: CategoriesMonthDto,
-    ): Promise<CategoriesMonthResponse> {
+    async getCategoriesByMonth(@Body() dto: CategoriesMonthDto): Promise<CategoriesMonthResponse> {
         const [day, month, year] = dto.monthDate.split('/').map(Number);
         const monthDate = new Date(year, month - 1, day);
 
-        const categoryExpenses = await this.service.getExpensesByCategoryForMonth(
-            userId,
-            year,
-            month,
-        );
+        const categoryExpenses = await this.service.getExpensesByCategoryForMonth(1, year, month);
 
         const totalExpenses = Array.from(categoryExpenses.values()).reduce(
             (sum, amount) => sum + amount,
@@ -227,24 +207,17 @@ export class TransactionController {
         };
     }
 
-    @Post('/:userId/month-summary')
-    @ApiParam({
-        name: 'userId',
-        description: 'ID пользователя',
-        type: Number,
-    })
+    // Итоги месяца
+    @Post('month-summary')
     @ApiOkResponse({
         description: 'Поступления и расходы за указанный месяц',
         type: MonthSummaryResponse,
     })
-    async getMonthSummary(
-        @Param('userId') userId: string,
-        @Body() dto: MonthSummaryDto,
-    ): Promise<MonthSummaryResponse> {
+    async getMonthSummary(@Body() dto: MonthSummaryDto): Promise<MonthSummaryResponse> {
         const [day, month, year] = dto.monthDate.split('/').map(Number);
         const monthDate = new Date(year, month - 1, day);
 
-        const { income, expenses } = await this.service.getMonthSummary(userId, year, month);
+        const { income, expenses } = await this.service.getMonthSummary(1, year, month);
 
         const balance = income - expenses;
         const expensesPercentage = income > 0 ? Math.round((expenses / income) * 100 * 10) / 10 : 0;
@@ -264,11 +237,24 @@ export class TransactionController {
 
     @Patch('/:userId/:transactionId/category')
     async updateCategory(
-        @Param('userId', ParseIntPipe) userId: number,
+        @Param('id', ParseIntPipe) userId: number,
         @Param('transactionId', ParseIntPipe) transactionId: number,
         @Body('category') category: string,
     ): Promise<{ success: boolean }> {
         await this.service.updateCategory(userId, transactionId, category);
         return { success: true };
+    }
+
+    @Get(':id')
+    @ApiOkResponse({
+        description: 'Возвращает транзакцию по id',
+        type: TransactionResponse,
+    })
+    async findOne(@Param('id') id: number): Promise<TransactionResponse> {
+        const transaction = await this.service.findById(id);
+        return {
+            ...transaction,
+            sum: transaction.deposit - transaction.withdrawal,
+        };
     }
 }

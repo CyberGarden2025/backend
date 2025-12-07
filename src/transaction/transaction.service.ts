@@ -176,7 +176,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getTotalTransactions(
-        userId: string,
+        userId: number,
         startDate: string,
         endDate: string,
     ): Promise<TotalTransactionResponse> {
@@ -220,7 +220,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getExpensesByMonth(
-        userId: string,
+        userId: number,
         startDate: Date,
         endDate: Date,
     ): Promise<Map<string, number>> {
@@ -268,7 +268,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getMonthSummary(
-        userId: string,
+        userId: number,
         year: number,
         month: number,
     ): Promise<{ income: number; expenses: number }> {
@@ -313,7 +313,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getExpensesByCategoryForMonth(
-        userId: string,
+        userId: number,
         year: number,
         month: number,
     ): Promise<Map<string, number>> {
@@ -353,7 +353,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getWithdrawalsForMonthWithIds(
-        userId: string,
+        userId: number,
         year: number,
         month: number,
     ): Promise<Array<{ id: number; category: string; amount: number }>> {

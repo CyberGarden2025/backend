@@ -1,10 +1,9 @@
-import { Controller, Post, Body, Param } from '@nestjs/common';
+import { Controller, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { MLService, PredictResponse } from './ml.service';
 import { PredictDto } from './dto/predict.dto';
 
 @ApiTags('ml')
-@ApiBearerAuth('keycloak')
 @Controller('ml')
 export class MLController {
     constructor(private readonly mlService: MLService) {}
@@ -31,17 +30,11 @@ export class MLController {
         return this.mlService.predictCategoriesBatch(body);
     }
 
-    @Post('forecast/:userId')
+    @Post('forecast')
     @ApiOperation({ summary: 'Получить финансовый прогноз для пользователя' })
-    async getFinancialForecast(
-        @Param('userId') userId: string,
-    ) {
-        return this.mlService
-            .getFinancialForecast({
-                userId,
-            })
-            .catch(err => {
-                console.log(err);
-            });
+    async getFinancialForecast() {
+        return this.mlService.getFinancialForecast(1).catch(err => {
+            console.log(err);
+        });
     }
 }

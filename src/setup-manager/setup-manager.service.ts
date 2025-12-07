@@ -34,14 +34,13 @@ export class SetupManagerService implements OnModuleInit {
             username: 'testUser',
             password: 'aeboba',
         };
-        const user =
-            (await this.userService.findOne({ where: { email: data.email } })) ||
-            (await this.userService.findOne({ where: { email: 'admin@example.com' } })) || // fallback to realm default
-            null;
+        const user = await this.userService.findById(1).catch(() => null);
 
         if (!user) {
             const created = await this.userService.createUser(data).catch(err => {
-                this.logger.warn(`Default user already exists or cannot be created: ${err?.message}`);
+                this.logger.warn(
+                    `Default user already exists or cannot be created: ${err?.message}`,
+                );
                 return null;
             });
             if (!created) {
@@ -54,7 +53,7 @@ export class SetupManagerService implements OnModuleInit {
         }
     }
 
-    async createCsvTransactions(userId: string) {
+    async createCsvTransactions(userId: number) {
         try {
             const filePath = join(__dirname, '..', '..', 'data', 'ci_data.csv');
 

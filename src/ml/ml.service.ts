@@ -17,7 +17,20 @@ export interface PredictResponse {
 }
 
 interface ForecastRequest {
+<<<<<<< HEAD
     userId: string;
+=======
+    userId: number;
+    transactions: Array<{
+        transactionDate: string;
+        category: string;
+        refNo?: string;
+        withdrawal: number;
+        deposit: number;
+        balance: number;
+    }>;
+    currentBalance: number;
+>>>>>>> origin/dev
     forecastMonths?: number;
 }
 
@@ -60,11 +73,12 @@ export class MLService {
         }
     }
 
-    async getFinancialForecast(request: ForecastRequest): Promise<any> {
+    async getFinancialForecast(userId: number): Promise<any> {
         try {
             const response = await firstValueFrom(
-                this.httpService.post(`${this.mlServiceUrl}/forecast`, request),
+                this.httpService.post(`${this.mlServiceUrl}/forecast`, { userId }),
             );
+            console.log(response.data);
             return response.data;
         } catch (error) {
             this.logger.error(`Failed to get financial forecast: ${error.message}`);

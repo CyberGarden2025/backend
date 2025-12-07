@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
 import Transaction from '../transaction/transaction.model';
+import User from 'src/user/user.model';
 
 export const databaseProviders = [
     {
@@ -21,7 +22,7 @@ export const databaseProviders = [
                     acquire: 30000,
                     idle: 10000,
                 },
-                models: [Transaction],
+                models: [Transaction, User],
             });
             return sequelize;
         },

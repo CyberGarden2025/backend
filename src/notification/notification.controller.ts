@@ -39,7 +39,7 @@ export class NotificationController {
             await appendNotificationLog({
                 timestamp: new Date().toISOString(),
                 type: 'send',
-                userId: String(body.userId),
+                userId: body.userId,
                 tokenMasked: maskToken(userToken),
                 status: 'success',
                 messageId: response.responses?.[0]?.messageId,
@@ -53,7 +53,7 @@ export class NotificationController {
             await appendNotificationLog({
                 timestamp: new Date().toISOString(),
                 type: 'send',
-                userId: String(body.userId),
+                userId: body.userId,
                 tokenMasked: maskToken(userToken),
                 status: 'error',
                 error: error?.message || 'Send failed',
@@ -86,7 +86,10 @@ export class NotificationController {
     }
 
     @Patch('token')
-    async updateFcmToken(@Body('userId') userId: string, @Body('fcmToken') fcmToken: string) {
+    async updateFcmToken(
+        @Body('userId', ParseIntPipe) userId: number,
+        @Body('fcmToken') fcmToken: string,
+    ) {
         try {
             const updated = await this.userService.update(userId, { fcmToken });
 
@@ -124,7 +127,7 @@ export class NotificationController {
         @Body()
         body: {
             event: string;
-            userId?: string;
+            userId?: number;
             token?: string;
             payload?: Record<string, unknown>;
         },
@@ -151,7 +154,7 @@ export class NotificationController {
             monthDate: string;
         },
     ) {
-        return this.notificationService.checkUserNotifications(String(userId), body.monthDate);
+        return this.notificationService.checkUserNotifications(userId, body.monthDate);
     }
 
     private async getUserToken(userId: number): Promise<string> {
