@@ -20,13 +20,13 @@ export class FirebaseModule {
 
         if (!admin.apps.length) {
             try {
-                admin.initializeApp({
-                    credential: admin.credential.cert({
+            admin.initializeApp({
+                credential: admin.credential.cert({
                         projectId,
                         clientEmail,
                         privateKey: privateKey.replace(/\\n/g, '\n'),
-                    }),
-                });
+                }),
+            });
                 this.logger.log('Firebase initialized successfully');
             } catch (error) {
                 this.logger.error(`Failed to initialize Firebase: ${error.message}`);
