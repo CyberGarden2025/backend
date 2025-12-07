@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { ForecastDto } from './dto/forecast.dto';
 
 export interface PredictRequest {
     transactionDate: string;
@@ -60,10 +61,10 @@ export class MLService {
         }
     }
 
-    async getFinancialForecast(request: ForecastRequest): Promise<any> {
+    async getFinancialForecast(userId: number, body?: ForecastDto): Promise<any> {
         try {
             const response = await firstValueFrom(
-                this.httpService.post(`${this.mlServiceUrl}/forecast`, request),
+                this.httpService.post(`${this.mlServiceUrl}/forecast`, { userId, ...body }),
             );
             return response.data;
         } catch (error) {

@@ -2,6 +2,7 @@ import { Controller, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { MLService, PredictResponse } from './ml.service';
 import { PredictDto } from './dto/predict.dto';
+import { ForecastDto } from './dto/forecast.dto';
 
 @ApiTags('ml')
 @Controller('ml')
@@ -32,8 +33,8 @@ export class MLController {
 
     @Post('forecast')
     @ApiOperation({ summary: 'Получить финансовый прогноз для пользователя' })
-    async getFinancialForecast() {
-        return this.mlService.getFinancialForecast({ userId: 1 }).catch(err => {
+    async getFinancialForecast(@Body() body: ForecastDto) {
+        return this.mlService.getFinancialForecast(1, body).catch(err => {
             console.log(err);
         });
     }
