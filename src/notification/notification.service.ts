@@ -7,6 +7,7 @@ import {
 } from './dto/notification.dto';
 import { UserService } from '../user/user.service';
 import { TransactionService } from '../transaction/transaction.service';
+import { MLService } from '../ml/ml.service';
 
 @Injectable()
 export class NotificationService {
@@ -16,6 +17,7 @@ export class NotificationService {
     constructor(
         private readonly userService: UserService,
         private readonly transactionService: TransactionService,
+        private readonly mlService: MLService,
     ) {
         this.isFirebaseAvailable = admin.apps.length > 0;
         if (!this.isFirebaseAvailable) {
@@ -278,6 +280,53 @@ export class NotificationService {
                         `Failed to send anomalous transactions notification: ${error.message}`,
                     );
                 });
+            }
+        }
+
+        // Прогноз и рекомендации (по умолчанию monthlyReport=true в настройках)
+        if (notificationSettings.monthlyReport && this.isFirebaseAvailable && user.fcmToken) {
+            try {
+                const forecast = await this.mlService.getFinancialForecast(userId, {
+                    forecastMonths: 2,
+                });
+
+                const score = forecast?.budget_stability_score;
+                const mainRecommendation = forecast?.recommendations?.[0];
+
+                if (typeof score === 'number') {
+                    let title = 'Финансовый прогноз';
+                    let body = `Ваш индекс стабильности бюджета: ${score}.`;
+
+                    if (score < 40) {
+                        body += ' Ситуация выглядит рискованной, обратите внимание на расходы.';
+                    } else if (score < 70) {
+                        body += ' Есть потенциал для улучшения, попробуйте оптимизировать траты.';
+                    } else {
+                        body += ' Бюджет выглядит достаточно устойчивым.';
+                    }
+
+                    if (mainRecommendation) {
+                        body += ` Рекомендация: сократить траты по категории ${mainRecommendation.category}.`;
+                    }
+
+                    void this.sendNotification(
+                        user.fcmToken,
+                        { title, body },
+                        {
+                            type: 'forecast',
+                            score: String(score),
+                            topCategory: mainRecommendation?.category ?? '',
+                        },
+                    ).catch(error => {
+                        this.logger.error(
+                            `Failed to send forecast-based notification: ${error.message}`,
+                        );
+                    });
+                }
+            } catch (error: any) {
+                this.logger.error(
+                    `Failed to get financial forecast for notifications: ${error.message}`,
+                );
             }
         }
 
