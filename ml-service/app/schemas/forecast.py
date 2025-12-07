@@ -3,12 +3,11 @@ from pydantic import BaseModel, Field
 
 
 class FinancialData(BaseModel):
-    # Accept UUID/string identifiers coming from Keycloak
-    user_id: str = Field(alias="userId")
+    user_id: str | None = Field(default=None, alias="userId")
     transactions: list[dict]
     current_balance: float = Field(alias="currentBalance")
     forecast_months: int = Field(default=3, alias="forecastMonths")
-    
+
     class Config:
         populate_by_name = True
 
@@ -53,3 +52,12 @@ class FinancialForecastOutput(BaseModel):
     recommendations: list[Recommendation]
     budget_stability_score: float
     is_mock: bool
+
+
+class UserForecastRequest(BaseModel):
+    user_id: str = Field(alias="userId")
+    forecast_months: int = Field(default=3, alias="forecastMonths")
+
+    class Config:
+        populate_by_name = True
+

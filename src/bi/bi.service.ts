@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { BIQueryDto } from './dto/bi-query.dto';
 
 export interface BIQueryRequest {
     question: string;
@@ -32,7 +33,11 @@ export class BIService {
         this.biServiceUrl = this.configService.get('BI_SERVICE_URL') || 'http://bi-service:8002';
     }
 
-    async query(request: BIQueryRequest): Promise<BIQueryResponse> {
+    async query(dto: BIQueryDto): Promise<BIQueryResponse> {
+        const request: BIQueryRequest = {
+            question: dto.question,
+            max_rows: dto.maxRows,
+        };
         try {
             const response = await firstValueFrom(
                 this.httpService.post<BIQueryResponse>(`${this.biServiceUrl}/bi/query`, request),

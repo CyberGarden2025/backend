@@ -9,7 +9,7 @@ class Settings(BaseModel):
     db_host: str = os.getenv("BI_DB_HOST", "pg")
     db_port: str = os.getenv("BI_DB_PORT", "5432")
     gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
-    llm_model: str = os.getenv("BI_LLM_MODEL", "gemini-1.5-pro")
+    llm_model: str = os.getenv("BI_LLM_MODEL", "models/gemini-flash-latest")
     max_rows: int = int(os.getenv("BI_MAX_ROWS", "200"))
 
     @property

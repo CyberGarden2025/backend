@@ -4,8 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.models.predictor import TransactionPredictor
 from app.models.forecast_predictor import FinancialForecastPredictor
 from app.schemas.transaction import TransactionInput, TransactionOutput
-from app.schemas.forecast import FinancialData, FinancialForecastOutput
+from app.schemas.forecast import (
+    FinancialData,
+    FinancialForecastOutput,
+    UserForecastRequest,
+)
 from app.config import settings
+from app.db import get_user_transactions_and_balance
 
 
 app = FastAPI(title="Financial ML Service")
@@ -53,10 +58,18 @@ async def predict_categories_batch(transactions: list[TransactionInput]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.post("/forecast", response_model=FinancialForecastOutput)
-async def financial_forecast(data: FinancialData):
+async def financial_forecast(request: UserForecastRequest):
     try:
+        transactions, current_balance = get_user_transactions_and_balance(request.user_id)
+
+        data = FinancialData(
+            userId=request.user_id,
+            transactions=transactions,
+            currentBalance=current_balance,
+            forecastMonths=request.forecast_months,
+        )
+
         forecast = forecast_predictor.predict(data)
         return forecast
     except Exception as e:

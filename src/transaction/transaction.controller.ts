@@ -148,7 +148,10 @@ export class TransactionController {
                 };
             }
 
-            const forecastData = await this.mlService.getFinancialForecast(1);
+            const forecastData = await this.mlService.getFinancialForecast({
+                userId: 1,
+                forecastMonths: futureMonths.length,
+            });
 
             if (forecastData && forecastData.forecast) {
                 forecastData.forecast.forEach((prediction: any, index: number) => {

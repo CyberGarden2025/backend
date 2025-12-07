@@ -19,6 +19,6 @@ export class BIQueryDto {
     @IsNumber()
     @Min(1)
     @Max(1000)
-    max_rows?: number;
+    maxRows?: number;
 }
 
