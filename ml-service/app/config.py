@@ -3,7 +3,9 @@ import os
 
 
 class Settings:
-    MODEL_PATH: Path = Path(__file__).parent / "weights" / "model.pkl"
+    # CatBoost model for transaction category prediction
+    MODEL_PATH: Path = Path(__file__).parent / "weights" / "tx_category_catboost_full.cbm"
+    # Legacy paths (not used with CatBoost, kept for backward compatibility)
     LABEL_ENCODER_PATH: Path = Path(__file__).parent / "weights" / "label_encoder.pkl"
     FORECAST_MODEL_PATH: Path = Path(__file__).parent / "weights" / "forecast_model.pkl"
     HOST: str = "0.0.0.0"
