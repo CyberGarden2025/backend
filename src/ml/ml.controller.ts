@@ -33,8 +33,8 @@ export class MLController {
 
     @Post('forecast')
     @ApiOperation({ summary: 'Получить финансовый прогноз для пользователя' })
-    async getFinancialForecast() {
-        return this.mlService.getFinancialForecast({ userId: '1' }).catch(err => {
+    async getFinancialForecast(@Body() body: ForecastDto) {
+        return this.mlService.getFinancialForecast(1, body).catch(err => {
             console.log(err);
         });
     }
