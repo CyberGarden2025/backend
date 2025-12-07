@@ -87,7 +87,7 @@ export class NotificationService {
     }
 
     async checkUserNotifications(
-        userId: string,
+        userId: number,
         monthDate: string,
     ): Promise<{
         categoryWarnings: CategoryLimitWarningDto[];

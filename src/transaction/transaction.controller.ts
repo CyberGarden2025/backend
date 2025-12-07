@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Patch, Param, Query, Body, ParseIntPipe, Req } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Patch,
+    Param,
+    Query,
+    Body,
+    ParseIntPipe,
+    Req,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TransactionService } from './transaction.service';
 import { TransactionResponse, TransactionsResponse } from './response/transaction.response';
@@ -15,7 +25,6 @@ import { TransactionCreateDto } from './dto/transaction-create.dto';
 import { Request } from 'express';
 
 @ApiTags('transactions')
-@ApiBearerAuth('keycloak')
 @Controller('transactions')
 export class TransactionController {
     constructor(
@@ -28,11 +37,10 @@ export class TransactionController {
         description: 'Список транзакций пользователя, сгруппированных по дате',
         type: [TransactionsResponse],
     })
-    async findAll(@Req() req: Request): Promise<TransactionsResponse[]> {
-        const userId = (req as any).user?.sub;
+    async findAll(): Promise<TransactionsResponse[]> {
         return this.service.getTransactionsGroupedByDate({
             where: {
-                userId,
+                userId: 1,
             },
         });
     }
@@ -50,14 +58,12 @@ export class TransactionController {
         };
     }
 
-    // Создание транзакции: userId берём из JWT, путь без параметров
     @Post()
     @ApiOkResponse({
         description: 'Транзакция успешно создана',
     })
-    async create(@Req() req: Request, @Body() dto: TransactionCreateDto) {
-        const userId = (req as any).user?.sub;
-        return this.service.createTransaction(userId, dto);
+    async create(@Body() dto: TransactionCreateDto) {
+        return this.service.createTransaction(1, dto);
     }
 
     // Доходы/расходы за период
@@ -80,8 +86,10 @@ export class TransactionController {
         description: 'Доходы и расходы за указанный период',
         type: TotalTransactionResponse,
     })
-    async getTotal(@Req() req: Request, @Query() periodDto: TransactionPeriodDto): Promise<TotalTransactionResponse> {
-        const userId = (req as any).user?.sub;
+    async getTotal(
+        @Param('id', ParseIntPipe) userId: number,
+        @Query() periodDto: TransactionPeriodDto,
+    ): Promise<TotalTransactionResponse> {
         return this.service.getTotalTransactions(userId, periodDto.start, periodDto.end);
     }
 
@@ -91,9 +99,11 @@ export class TransactionController {
         description: 'Расходы за указанный месяц и прогноз на 7 месяцев',
         type: ExpensesChartResponse,
     })
-    async getExpensesChart(@Req() req: Request, @Body() dto: ExpensesChartDto): Promise<ExpensesChartResponse> {
+    async getExpensesChart(
+        @Param('id', ParseIntPipe) userId: number,
+        @Body() dto: ExpensesChartDto,
+    ): Promise<ExpensesChartResponse> {
         const [day, month, year] = dto.startDate.split('/').map(Number);
-        const userId = (req as any).user?.sub;
         const baseDate = new Date(year, month - 1, day);
         const currentYear = baseDate.getFullYear();
         const currentMonth = baseDate.getMonth();
@@ -115,7 +125,11 @@ export class TransactionController {
             0,
         );
 
-        const monthlyExpenses = await this.service.getExpensesByMonth(userId, queryStartDate, queryEndDate);
+        const monthlyExpenses = await this.service.getExpensesByMonth(
+            userId,
+            queryStartDate,
+            queryEndDate,
+        );
 
         const monthData = months.map(({ date, isPrediction }) => {
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
@@ -192,12 +206,18 @@ export class TransactionController {
         description: 'Расходы по категориям за указанный месяц',
         type: CategoriesMonthResponse,
     })
-    async getCategoriesByMonth(@Req() req: Request, @Body() dto: CategoriesMonthDto): Promise<CategoriesMonthResponse> {
+    async getCategoriesByMonth(
+        @Param('id', ParseIntPipe) userId: number,
+        @Body() dto: CategoriesMonthDto,
+    ): Promise<CategoriesMonthResponse> {
         const [day, month, year] = dto.monthDate.split('/').map(Number);
         const monthDate = new Date(year, month - 1, day);
 
-        const userId = (req as any).user?.sub;
-        const categoryExpenses = await this.service.getExpensesByCategoryForMonth(userId, year, month);
+        const categoryExpenses = await this.service.getExpensesByCategoryForMonth(
+            userId,
+            year,
+            month,
+        );
 
         const totalExpenses = Array.from(categoryExpenses.values()).reduce(
             (sum, amount) => sum + amount,
@@ -230,9 +250,11 @@ export class TransactionController {
         description: 'Поступления и расходы за указанный месяц',
         type: MonthSummaryResponse,
     })
-    async getMonthSummary(@Req() req: Request, @Body() dto: MonthSummaryDto): Promise<MonthSummaryResponse> {
+    async getMonthSummary(
+        @Param('id', ParseIntPipe) userId: number,
+        @Body() dto: MonthSummaryDto,
+    ): Promise<MonthSummaryResponse> {
         const [day, month, year] = dto.monthDate.split('/').map(Number);
-        const userId = (req as any).user?.sub;
         const monthDate = new Date(year, month - 1, day);
 
         const { income, expenses } = await this.service.getMonthSummary(userId, year, month);
@@ -255,11 +277,10 @@ export class TransactionController {
 
     @Patch('/:userId/:transactionId/category')
     async updateCategory(
-        @Req() req: Request,
+        @Param('id', ParseIntPipe) userId: number,
         @Param('transactionId', ParseIntPipe) transactionId: number,
         @Body('category') category: string,
     ): Promise<{ success: boolean }> {
-        const userId = (req as any).user?.sub;
         await this.service.updateCategory(userId, transactionId, category);
         return { success: true };
     }

@@ -21,25 +21,13 @@ async function bootstrap() {
         return `http://${trimmed}`;
     };
 
-    const allowedOrigins =
-        frontendHost
-            ?.split(',')
-            .map(normalizeOrigin)
-            .filter((origin): origin is string => Boolean(origin)) || ['http://localhost:4200'];
+    const allowedOrigins = frontendHost
+        ?.split(',')
+        .map(normalizeOrigin)
+        .filter((origin): origin is string => Boolean(origin)) || ['http://localhost:4200'];
     app.setGlobalPrefix('api');
 
-    const config = new DocumentBuilder()
-        .setTitle('Banking API')
-        .setVersion('1.0')
-        .addBearerAuth(
-            {
-                type: 'http',
-                scheme: 'bearer',
-                bearerFormat: 'JWT',
-            },
-            'keycloak',
-        )
-        .build();
+    const config = new DocumentBuilder().setTitle('Banking API').setVersion('1.0').build();
     const document = SwaggerModule.createDocument(app, config);
 
     app.useGlobalPipes(

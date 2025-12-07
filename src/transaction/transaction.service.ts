@@ -36,7 +36,7 @@ export class TransactionService extends RepositoryService<Transaction> {
         return date.toISOString().split('T')[0];
     }
 
-    async createTransaction(userId: string, payload: TransactionCreateDto): Promise<Transaction> {
+    async createTransaction(userId: number, payload: TransactionCreateDto): Promise<Transaction> {
         // Получаем пользователя (findById бросает NotFoundException если не найден)
         const user = await this.userService.findById(userId);
 
@@ -176,7 +176,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getTotalTransactions(
-        userId: string,
+        userId: number,
         startDate: string,
         endDate: string,
     ): Promise<TotalTransactionResponse> {
@@ -220,7 +220,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getExpensesByMonth(
-        userId: string,
+        userId: number,
         startDate: Date,
         endDate: Date,
     ): Promise<Map<string, number>> {
@@ -268,7 +268,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getMonthSummary(
-        userId: string,
+        userId: number,
         year: number,
         month: number,
     ): Promise<{ income: number; expenses: number }> {
@@ -313,7 +313,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getExpensesByCategoryForMonth(
-        userId: string,
+        userId: number,
         year: number,
         month: number,
     ): Promise<Map<string, number>> {
@@ -353,7 +353,7 @@ export class TransactionService extends RepositoryService<Transaction> {
     }
 
     async getWithdrawalsForMonthWithIds(
-        userId: string,
+        userId: number,
         year: number,
         month: number,
     ): Promise<Array<{ id: number; category: string; amount: number }>> {
@@ -408,7 +408,7 @@ export class TransactionService extends RepositoryService<Transaction> {
         return months[monthIndex];
     }
 
-    async updateCategory(userId: string, transactionId: number, category: string): Promise<void> {
+    async updateCategory(userId: number, transactionId: number, category: string): Promise<void> {
         const [affectedCount] = await this.repository.update(
             { category },
             {

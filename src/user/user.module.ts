@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { KeycloakUserService } from './keycloak-user.service';
+import { userProviders } from './user.providers';
 
 @Module({
     controllers: [UserController],
-    providers: [UserService, KeycloakUserService],
+    providers: [UserService, ...userProviders],
     exports: [UserService],
 })
 export class UserModule {}

@@ -1,57 +1,31 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { KeycloakUserProfile, KeycloakUserService } from './keycloak-user.service';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+
+import User from './user.model';
+import { RepositoryService } from '../common/repository/repository.service';
+import { ModelType } from '../common/repository/type/model-type';
+import { UserCreatePayload } from './payload/user-create-payload';
 
 @Injectable()
-export class UserService {
+export class UserService extends RepositoryService<User> {
     private readonly logger = new Logger(UserService.name);
 
-    constructor(private readonly kcUserService: KeycloakUserService) {}
-
-    async findById(id: string): Promise<KeycloakUserProfile> {
-        try {
-            return await this.kcUserService.findById(String(id));
-        } catch (error) {
-            this.logger.warn(`User ${id} not found in Keycloak: ${error}`);
-            throw new NotFoundException('User not found');
-        }
+    constructor(
+        @Inject('USERS_REPOSITORY')
+        protected repository: ModelType<User>,
+    ) {
+        super(repository);
     }
 
-    async findOne(options: { where: { email?: string } }): Promise<KeycloakUserProfile | null> {
-        const email = options.where.email;
-        if (!email) return null;
-        return this.kcUserService.findByEmail(email);
-    }
+    async createUser(payload: UserCreatePayload) {
+        const hashedPassword = await this.hashPassword(payload.password);
 
-    async createUser(payload: {
-        email: string;
-        username: string;
-        password: string;
-        balance?: number;
-        financialCushion?: number;
-        transactionLimit?: number;
-        categoryLimits?: Record<string, number>;
-        notificationSettings?: any;
-        fcmToken?: string;
-    }): Promise<KeycloakUserProfile> {
-        return this.kcUserService.createUser({
-            email: payload.email,
-            username: payload.username,
-            password: payload.password,
-            attributes: {
-                balance: payload.balance ?? 0,
-                financialCushion: payload.financialCushion ?? 0,
-                transactionLimit: payload.transactionLimit ?? 0,
-                categoryLimits: payload.categoryLimits ?? {},
-                notificationSettings: payload.notificationSettings,
-                fcmToken: payload.fcmToken,
-            } as any,
+        return super.create({
+            ...payload,
+            password: hashedPassword,
         });
     }
-
-    async update(
-        id: string,
-        payload: Partial<Omit<KeycloakUserProfile, 'id' | 'email' | 'username'>>,
-    ): Promise<KeycloakUserProfile> {
-        return this.kcUserService.updateUser(id, payload);
+    private async hashPassword(password: string): Promise<string> {
+        return bcrypt.hash(password, 10);
     }
 }

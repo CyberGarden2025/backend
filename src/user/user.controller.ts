@@ -1,84 +1,19 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Put } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { UserService } from './user.service';
-import { FirebaseUserDto } from './dto/firebase-user.dto';
-import { UpdateUserSettingsDto } from './dto/user-settings.dto';
 
 @ApiTags('users')
-@ApiBearerAuth('keycloak')
 @Controller('users')
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
-    @Get(':id/profile')
-    @ApiParam({
-        name: 'id',
-        description: 'ID пользователя',
-        type: String,
-        example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b',
-    })
-    @ApiOkResponse({
-        description: 'Профиль пользователя для фронта / Firebase',
-        type: FirebaseUserDto,
-    })
-    async getProfile(@Param('id') id: string): Promise<FirebaseUserDto> {
-        const user = await this.userService.findById(id);
-        return this.toFirebaseDto(user as any);
-    }
-
-    @Put(':id/profile')
-    @ApiParam({
-        name: 'id',
-        description: 'ID пользователя',
-        type: String,
-        example: '150d4b8d-c9a7-46ee-8238-c3feae6c286b',
-    })
-    @ApiOkResponse({
-        description: 'Обновлённый профиль пользователя',
-        type: FirebaseUserDto,
-    })
-    async updateProfile(
-        @Param('id') id: string,
-        @Body() dto: UpdateUserSettingsDto,
-    ): Promise<FirebaseUserDto> {
-        const defaultNotificationSettings = {
-            categoryLimitWarning: true,
-            financialCushionWarning: true,
-            anomalousTransactionAlert: true,
-            monthlyReport: true,
-        };
-
-        const updated = await this.userService.update(id, {
-            financialCushion: dto.financialCushion,
-            transactionLimit: dto.transactionLimit,
-            categoryLimits: dto.categoryLimits,
-            notificationSettings: dto.notificationSettings
-                ? { ...defaultNotificationSettings, ...dto.notificationSettings }
-                : undefined,
-            fcmToken: dto.fcmToken,
+    @Get()
+    async findOne() {
+        return this.userService.findOne({
+            where: {
+                id: 1,
+            },
         });
-
-        return this.toFirebaseDto(updated as any);
-    }
-
-    private toFirebaseDto(user: any): FirebaseUserDto {
-        const defaultNotificationSettings = {
-            categoryLimitWarning: true,
-            financialCushionWarning: true,
-            anomalousTransactionAlert: true,
-            monthlyReport: true,
-        };
-
-        return {
-            id: user.id,
-            email: user.email,
-            username: user.username,
-            balance: user.balance ?? 0,
-            financialCushion: user.financialCushion ?? 0,
-            categoryLimits: user.categoryLimits ?? {},
-            notificationSettings: user.notificationSettings ?? defaultNotificationSettings,
-            fcmToken: user.fcmToken,
-        };
     }
 }
