@@ -24,3 +24,21 @@ class BIQueryResponse(BaseModel):
     chart: BIChartSpec | None
 
 
+class SuggestedQuery(BaseModel):
+    label: str
+    question: str
+
+
+class BIChatRequest(BaseModel):
+    question: str | None = None
+    max_rows: int | None = Field(default=None, ge=1, le=1000)
+
+
+class BIChatResponse(BaseModel):
+    answer: str
+    sql: str | None = None
+    rows: list[dict[str, Any]] = Field(default_factory=list)
+    chart: BIChartSpec | None = None
+    suggested_queries: list[SuggestedQuery] = Field(default_factory=list)
+
+
