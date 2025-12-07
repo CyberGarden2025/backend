@@ -13,6 +13,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 import { APP_FILTER } from '@nestjs/core';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { DiagnosticsModule } from './diagnostics/diagnostics.module';
+import { LimitModule } from './limit/limit.module';
 
 @Module({
     imports: [
@@ -24,6 +25,7 @@ import { DiagnosticsModule } from './diagnostics/diagnostics.module';
         UserModule,
         TransactionModule,
         SetupManagerModule,
+        LimitModule,
         MLModule,
         BIModule,
         AIChatModule,

@@ -99,13 +99,21 @@ export class SetupManagerService implements OnModuleInit {
                     };
 
                     await this.transactionService.create(transactionData);
+
                     createdCount++;
                 } catch (error) {
                     this.logger.error(`Error creating transaction: ${error.message}`, record);
                     errorCount++;
                 }
             }
+            const lastRecord = records[0];
+            const balance =
+                this.parseNumber(lastRecord.Deposit) - this.parseNumber(lastRecord.Withdrawal);
+            await this.userService.update(userId, {
+                balance: balance,
+            });
 
+            this.logger.log(`Balance updated ${balance}`);
             this.logger.log(`CSV import completed: ${createdCount} created, ${errorCount} errors`);
             await this.userService.update(userId, {
                 balance: this.parseNumber(records.at(-1)!.Balance),
