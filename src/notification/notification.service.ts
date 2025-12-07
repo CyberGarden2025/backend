@@ -13,6 +13,8 @@ import { MLService } from '../ml/ml.service';
 export class NotificationService {
     private readonly logger = new Logger(NotificationService.name);
     private readonly isFirebaseAvailable: boolean;
+    // Временный хардкод: для форкаста всегда используем данные первого пользователя
+    private readonly forecastUserId = 1;
 
     constructor(
         private readonly userService: UserService,
@@ -286,7 +288,7 @@ export class NotificationService {
         // Прогноз и рекомендации (по умолчанию monthlyReport=true в настройках)
         if (notificationSettings.monthlyReport && this.isFirebaseAvailable && user.fcmToken) {
             try {
-                const forecast = await this.mlService.getFinancialForecast(userId, {
+                const forecast = await this.mlService.getFinancialForecast(this.forecastUserId, {
                     forecastMonths: 2,
                 });
 
